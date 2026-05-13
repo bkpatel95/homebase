@@ -10,6 +10,84 @@ as a three-column newspaper with a chat bar that can edit the layout.
 Split out of [`podman-server`](https://github.com/bkpatel95/podman-server)
 on 2026-05-13. Older history lives there.
 
+## Architecture
+
+```mermaid
+flowchart TB
+  classDef ext    fill:#fef3c7,stroke:#a16207,color:#451a03
+  classDef cf     fill:#fed7aa,stroke:#c2410c,color:#431407
+  classDef app    fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
+  classDef vol    fill:#e0e7ff,stroke:#4338ca,color:#1e1b4b
+  classDef shared fill:#dcfce7,stroke:#15803d,color:#14532d
+
+  user["Browser<br/>homebase.lebcp.com"]:::ext
+
+  subgraph cfl["Cloudflare edge"]
+    cfa["Access — SSO + email allowlist<br/>(injects cf-access-authenticated-user-email)"]:::cf
+    cft["cloudflared tunnel<br/>(runs in podman-server stack)"]:::cf
+  end
+
+  subgraph prod["Minisforum prod box (Ubuntu 24.04 · rootful Podman)"]
+    subgraph dbc["daily-bhavi container — single image, nginx + uvicorn"]
+      nginx["nginx :8095<br/>static + reverse proxy"]:::app
+      spa["React SPA<br/>/var/www/daily-bhavi"]:::app
+      fapi["FastAPI on uvicorn :8096<br/>cloudflare_access_guard middleware"]:::app
+      rt["routers/<br/>edition · layout · sources · chat · ws"]:::app
+      cn["connectors/<br/>oura · calendar · plex · markets · prometheus · nutrition · quick_links"]:::app
+      ch["chat/<br/>claude_client · tools · in-memory sessions"]:::app
+
+      nginx -- "/ · /assets · /sw.js" --> spa
+      nginx -- "/api/* · /api/chat SSE · /api/ws" --> fapi
+      fapi --- rt
+      fapi --- cn
+      fapi --- ch
+    end
+
+    vol[("/srv/containers/homebase/<br/>layout.json · health-data/ · calendar/ · recipes/")]:::vol
+    prom["Prometheus :9090<br/>(monitoring-net, shared with podman-server)"]:::shared
+    host["Host services on host.containers.internal<br/>Plex :32400 · Overseerr :5055"]:::shared
+
+    dbc -. /data mount .-> vol
+    cn -- "PROMETHEUS_URL" --> prom
+    cn --> host
+  end
+
+  oura["Oura Ring API"]:::ext
+  markets["Stooq · CoinGecko"]:::ext
+  gcal["External cron writes<br/>calendar/today.json"]:::ext
+  anthropic["Anthropic API<br/>Claude Sonnet 4.6 + Haiku 4.5"]:::ext
+
+  user --> cfa --> cft -- ":8095" --> nginx
+  cn --> oura
+  cn --> markets
+  gcal -. file-backed .-> vol
+  ch --> anthropic
+```
+
+Notes the diagram glosses over:
+
+- **Auth.** Every `/api/*` request except `/api/health` runs through the
+  `cloudflare_access_guard` middleware in `backend/app.py`, which trusts the
+  `cf-access-authenticated-user-email` header set by Cloudflare Access and
+  rejects anything not in `ALLOWED_EMAILS`. The nginx proxy passes that header
+  through verbatim — see `nginx.conf`.
+- **Chat sessions** are in-memory only (`backend/chat/session.py`), keyed by a
+  client-supplied UUID in `localStorage` with idle expiry. There is no
+  persistent chat-history store; restarting the container clears transcripts.
+- **Model routing.** `chat/claude_client.py:pick_model()` routes pure
+  layout-edit messages to Haiku 4.5 for cost; questions and analysis go to
+  Sonnet 4.6. Claude calls layout tools that mutate `layout.json` on the
+  volume, then the backend broadcasts an `edition_dirty` event over
+  `/api/ws` so connected tabs refetch `/api/edition`.
+- **Connectors** are uniform `Connector` subclasses (`backend/connectors/base.py`).
+  Some hit external APIs directly (oura, markets, prometheus, plex); others
+  read files dropped onto the `/data` volume by external cron jobs
+  (calendar, the health-data summary, recipes).
+- **monitoring-net** is created by the `podman-server` monitoring compose
+  stack and joined here as an external network — see `deploy/docker-compose.yml`.
+  If you stand this app up on a box without that stack, create the network
+  (or a stand-in) first or the container won't start.
+
 ## Layout
 
 ```
