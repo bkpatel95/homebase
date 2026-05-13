@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+
+# Build outputs
+frontend/dist/
+build/
+*.egg-info/
+
+# Environment + secrets
+.env
+.env.local
+*.secret
+deploy/.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Local backups
+*.bak
+*.bak.*

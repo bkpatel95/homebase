@@ -1,0 +1,63 @@
+# The Daily Bhavi — personal newspaper dashboard at homebase.lebcp.com
+# Built from the homebase repo root on prod. Reaches Prometheus on the
+# monitoring-net created by the podman-server monitoring stack.
+
+networks:
+  homebase-net:
+    name: homebase-net
+    driver: bridge
+  monitoring-net:
+    name: monitoring-net
+    external: true
+
+services:
+
+  daily-bhavi:
+    image: localhost/homebase:local
+    container_name: daily-bhavi
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-dev}
+    restart: unless-stopped
+    # Secrets (ANTHROPIC_API_KEY, PLEX_TOKEN, OVERSEERR_API_KEY, OURA_TOKEN)
+    # come in via env_file so podman-compose does NOT expand their values into
+    # the echoed `podman run` command. .env is chmod 600 and gitignored.
+    env_file:
+      - .env
+    environment:
+      - TZ=${TZ:-America/New_York}
+      # Reach Prometheus by service name on the shared monitoring-net.
+      - PROMETHEUS_URL=http://prometheus:9090
+      - PROD_HEALTH_JSON=/data/health-data/prod-health.json
+      - OURA_SUMMARY=/data/health-data/daily-summary.json
+      - CALENDAR_EVENTS=/data/calendar/today.json
+      - RECIPE_DIR=/data/recipes
+      - LAYOUT_PATH=/data/layout.json
+      - REQUIRE_AUTH=${HOMEBASE_REQUIRE_AUTH:-true}
+      - ALLOWED_EMAILS=${HOMEBASE_ALLOWED_EMAILS:-bhavipatel141@gmail.com}
+      # Non-secret URLs keep defaults here; tokens are now in env_file only.
+      - PLEX_URL=${PLEX_URL:-http://host.containers.internal:32400}
+      - OVERSEERR_URL=${OVERSEERR_URL:-http://host.containers.internal:5055}
+      - MARKETS_EXTRA=${MARKETS_EXTRA:-}
+    ports:
+      - "8095:8095"
+    volumes:
+      - /srv/containers/homebase/data:/data
+      - /srv/containers/homebase/health-data:/data/health-data:ro
+      - /srv/containers/homebase/calendar:/data/calendar:ro
+      - /srv/containers/homebase/recipes:/data/recipes:ro
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+    networks:
+      - homebase-net
+      - monitoring-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8095/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      io.containers.autoupdate: local

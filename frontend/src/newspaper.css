@@ -1,0 +1,273 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #faf8f4;
+  --paper-dark: #f3efe6;
+  --ink: #1a1a1a;
+  --ink-soft: #3a3a3a;
+  --rule: #cfc8b8;
+  --rule-thick: #8a826f;
+  --accent: #8a2a1f;
+}
+
+html, body, #root {
+  height: 100%;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image:
+    radial-gradient(rgba(0,0,0,0.018) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,0.012) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+}
+
+/* ── Newspaper typographic primitives ───────────────────────────── */
+
+.masthead-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.headline {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.section-eyebrow {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.dateline {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.byline {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.body-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ink);
+}
+
+.data-num {
+  font-family: Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.meta-sans {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* ── Rules and dividers ─────────────────────────────────────────── */
+
+.rule-thin    { border-color: var(--rule); }
+.rule-thick   { border-color: var(--rule-thick); }
+
+.double-rule {
+  border-top: 1px solid var(--rule-thick);
+  box-shadow: inset 0 3px 0 var(--paper), inset 0 4px 0 var(--rule-thick);
+  height: 4px;
+}
+
+.rule-after::after {
+  content: "";
+  display: block;
+  border-bottom: 1px solid var(--rule);
+  margin-top: 0.75rem;
+}
+
+/* ── Newspaper grid layout ──────────────────────────────────────── */
+
+.broadsheet {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .broadsheet { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 1100px) {
+  .broadsheet {
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 1.75rem;
+  }
+}
+
+/* Vertical column rules between grid items in the same row */
+.col-rule-right {
+  position: relative;
+}
+.col-rule-right::after {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  right: -0.875rem;
+  width: 1px;
+  background: var(--rule);
+}
+
+@media (max-width: 1099px) {
+  .col-rule-right.lg-only::after { display: none; }
+}
+
+@media (max-width: 767px) {
+  .col-rule-right::after { display: none; }
+}
+
+/* ── Drop cap for lead column ──────────────────────────────────── */
+
+.dropcap::first-letter {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 900;
+  float: left;
+  font-size: 3.5rem;
+  line-height: 0.85;
+  padding: 0.2rem 0.6rem 0 0;
+  color: var(--ink);
+}
+
+/* ── Ticker bar ────────────────────────────────────────────────── */
+
+.ticker-rail {
+  border-top: 1px solid var(--rule-thick);
+  border-bottom: 1px solid var(--rule-thick);
+  background: var(--paper-dark);
+}
+
+.ticker-item + .ticker-item {
+  border-left: 1px solid var(--rule);
+}
+
+/* ── Status pills ──────────────────────────────────────────────── */
+
+.dot { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 9999px; }
+.dot-ok   { background: #2f6a3a; }
+.dot-warn { background: #b8870b; }
+.dot-bad  { background: var(--accent); }
+
+/* ── Small refinements ─────────────────────────────────────────── */
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+a, a:visited {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 120ms ease;
+}
+a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Subtle paper grain on cards */
+.card {
+  background: rgba(255,255,255,0.0);
+}
+
+/* Loading shimmer that fits the paper aesthetic */
+@keyframes inkfade {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.8; }
+}
+.ink-loading { animation: inkfade 1.6s ease-in-out infinite; color: var(--ink-soft); }
+
+/* ── Chat panel ─────────────────────────────────────────────────────────── */
+
+/* Mobile / portrait: bottom sheet up to 60vh */
+.chat-panel {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  width: 100%;
+  height: min(60vh, 560px);
+  border-radius: 0;
+  border-top-width: 1px;
+}
+
+/* Tablet+ / landscape: slide-in right rail, full height */
+@media (min-width: 768px) {
+  .chat-panel {
+    left: auto;
+    top: 0;
+    bottom: 0;
+    width: min(440px, 92vw);
+    height: 100vh;
+    border-left-width: 1px;
+    border-top-width: 0;
+  }
+}
+
+/* Boost the chat-pill resting position on iOS so it clears the home indicator. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .chat-pill {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Sources panel ──────────────────────────────────────────────────────── */
+
+.sources-panel {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  height: 100vh;
+  border-right-width: 1px;
+  border-top-width: 0;
+  border-left-width: 0;
+}
+
+@media (max-width: 480px) {
+  .sources-panel { width: 100vw; }
+}
+
+.masthead-gear {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+.masthead-gear:hover {
+  border-color: var(--rule-thick);
+  color: var(--ink);
+}
