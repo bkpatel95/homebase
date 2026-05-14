@@ -1,0 +1,107 @@
+# Local dev stack for the homebase repo.
+#
+# Differs from deploy/docker-compose.yml in three big ways:
+#   1. Backend (uvicorn --reload) and frontend (vite dev server) run as
+#      separate containers with the source mounted in for hot reload, instead
+#      of nginx serving a baked SPA.
+#   2. /data is backed by dev/mock-data/ so you don't need real Oura, Plex,
+#      or Overseerr tokens to see the app render with realistic-looking data.
+#   3. A throwaway Postgres container is included for chat-history dev work
+#      (the prod app doesn't talk to it yet — see backend/chat/session.py
+#      "Phase 4 will move this to Postgres").
+#
+# Usage:
+#   cp .env.example .env       # then fill in ANTHROPIC_API_KEY (others optional)
+#   docker compose -f docker-compose.dev.yml up --build
+# or:
+#   make dev
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: dev/Dockerfile.backend.dev
+    container_name: homebase-backend-dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Force REQUIRE_AUTH off in dev — there's no Cloudflare Access in front
+      # of localhost. The .env file can override if you need to test the auth
+      # path with a fake header.
+      REQUIRE_AUTH: ${REQUIRE_AUTH:-false}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-dev@localhost}
+      TZ: ${TZ:-America/New_York}
+      # File-backed connectors all read from /data — point them at the mock
+      # tree so they always have something to render.
+      LAYOUT_PATH: /data/layout.json
+      SOURCES_PATH: /data/sources.json
+      PROD_HEALTH_JSON: /data/health-data/prod-health.json
+      OURA_SUMMARY: /data/health-data/daily-summary.json
+      CALENDAR_EVENTS: /data/calendar/today.json
+      RECIPE_DIR: /data/recipes
+      # No Prometheus running locally — leave the URL pointing at a name
+      # that will fail-fast so the connector surfaces a clean error rather
+      # than hanging on a real network request.
+      PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus.invalid:9090}
+      PLEX_URL: ${PLEX_URL:-http://plex.invalid:32400}
+      OVERSEERR_URL: ${OVERSEERR_URL:-http://overseerr.invalid:5055}
+      # Reserved for future chat-history persistence work (Phase 4 in
+      # backend/chat/session.py). Current code does not connect to Postgres.
+      DATABASE_URL: postgresql://homebase:homebase@postgres:5432/homebase_chat
+    volumes:
+      - ./backend:/app/backend
+      # Mount the mock data tree as the /data volume so file-backed connectors
+      # have something to read. :rw because the app writes layout.json and
+      # sources.json — it's fine for those to mutate inside the dev tree.
+      - ./dev/mock-data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: .
+      dockerfile: dev/Dockerfile.frontend.dev
+    container_name: homebase-frontend-dev
+    restart: unless-stopped
+    environment:
+      # Tell vite.config.js where to proxy /api requests. The frontend
+      # container can't reach localhost:8000 — it has to go through the
+      # docker network to the backend service.
+      VITE_API_PROXY_TARGET: http://backend:8000
+    volumes:
+      - ./frontend:/app
+      # Keep node_modules from the image — without this volume, the host
+      # mount above would shadow them and vite wouldn't find react.
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    container_name: homebase-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: homebase
+      POSTGRES_PASSWORD: homebase
+      POSTGRES_DB: homebase_chat
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Exposed on a non-standard port so it doesn't clash with a host
+      # postgres if you happen to run one.
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "homebase", "-d", "homebase_chat"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  frontend_node_modules:
+  postgres_data:

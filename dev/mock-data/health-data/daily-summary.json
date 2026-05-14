@@ -1,0 +1,32 @@
+[
+  {
+    "date": "2026-05-11",
+    "sleep_score": 78,
+    "sleep_duration_hours": 7.2,
+    "readiness_score": 75,
+    "avg_hrv": 42,
+    "avg_hr_sleep": 58,
+    "active_calories": 540,
+    "steps": 7820
+  },
+  {
+    "date": "2026-05-12",
+    "sleep_score": 81,
+    "sleep_duration_hours": 7.5,
+    "readiness_score": 77,
+    "avg_hrv": 44,
+    "avg_hr_sleep": 57,
+    "active_calories": 612,
+    "steps": 8950
+  },
+  {
+    "date": "2026-05-13",
+    "sleep_score": 84,
+    "sleep_duration_hours": 7.6,
+    "readiness_score": 79,
+    "avg_hrv": 46,
+    "avg_hr_sleep": 56,
+    "active_calories": 705,
+    "steps": 9420
+  }
+]

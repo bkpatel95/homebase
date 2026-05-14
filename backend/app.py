@@ -25,7 +25,13 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .config import validate_env
 from .routers import chat, edition, layout, sources, ws
+
+# Fail fast at import time if required env vars are missing. Uvicorn surfaces
+# the RuntimeError and refuses to bind the port — easier to debug than a
+# late 503 from /api/chat. Optional integrations log a warning instead.
+validate_env()
 
 ALLOWED_EMAILS = {
     e.strip().lower()

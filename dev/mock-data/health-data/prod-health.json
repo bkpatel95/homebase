@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-05-13T08:00:00Z",
+  "checks": {
+    "containers": {
+      "total": 12,
+      "expected_total": 12,
+      "missing": [],
+      "not_running": [],
+      "high_restart": []
+    },
+    "disk": {
+      "warnings": []
+    },
+    "tunnels": {
+      "errors": []
+    }
+  }
+}

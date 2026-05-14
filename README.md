@@ -102,12 +102,49 @@ skills/         Claude Code skills scoped to this repo (e.g. add-widget)
 
 ## Develop
 
-Backend (from `backend/`):
+The fastest path is the dockerized dev stack — one command, no Python or
+Node installed locally, no real Plex/Oura/Overseerr tokens needed:
+
+```bash
+cp .env.example .env       # set ANTHROPIC_API_KEY; the rest is optional
+make dev                   # http://localhost:3000 (frontend) → :8000 (backend)
+```
+
+`docker-compose.dev.yml` runs three containers:
+
+- **backend** — uvicorn with `--reload`, source mounted from `./backend`
+- **frontend** — vite dev server with HMR, source mounted from `./frontend`
+- **postgres** — exposed on `:5433`, reserved for future chat-history
+  persistence (Phase 4 in `backend/chat/session.py`)
+
+The `/data` mount points at `dev/mock-data/`, so file-backed connectors
+(calendar, Oura summary, prod-health, recipes) render with realistic
+sample data out of the box. The calendar widget filters on today's date —
+run `make dev-seed` to rewrite `dev/mock-data/calendar/today.json` with
+today's date so the events actually show up. API connectors (Plex,
+Overseerr, Oura API) gracefully render "not configured" if their tokens
+are unset.
+
+Common Make targets (run `make` for the full list):
+
+| Target | What it does |
+|---|---|
+| `make dev` | Build + start the stack (foreground) |
+| `make dev-down` | Stop and remove containers |
+| `make dev-logs` | Tail logs from all containers |
+| `make dev-seed` | Refresh mock calendar with today's date |
+| `make dev-clean` | Stop AND wipe postgres + node_modules volumes |
+
+### Without docker
+
+If you'd rather run uvicorn and vite directly:
+
+Backend (from repo root):
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn backend.app:app --reload --port 8096
+pip install -r backend/requirements.txt
+uvicorn backend.app:app --reload --port 8096    # picks up env from your shell
 ```
 
 Frontend (from `frontend/`):
@@ -116,6 +153,11 @@ Frontend (from `frontend/`):
 npm install
 npm run dev          # vite at :5173, proxies /api → :8096
 ```
+
+Either way: missing `ANTHROPIC_API_KEY` makes the backend refuse to start
+with a clear error (see `backend/config.py`). Missing optional integration
+tokens (`OURA_TOKEN`, `PLEX_TOKEN`, `OVERSEERR_API_KEY`) just log a warning
+at startup — those connectors render unavailable in the UI.
 
 ## Deploy
 
