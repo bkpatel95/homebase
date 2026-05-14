@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0 --ext .js,.jsx",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,css}\""
+    "lint:fix": "eslint . --fix --ext .js,.jsx",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"*.{js,json,html}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css}\" \"*.{js,json,html}\""
   },
   "dependencies": {
     "react": "^18.3.1",

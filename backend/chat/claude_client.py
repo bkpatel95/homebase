@@ -98,7 +98,7 @@ async def stream_with_tools(
 
     yield {"type": "model", "name": model}
 
-    for _loop_i in range(MAX_TOOL_LOOPS):
+    for _ in range(MAX_TOOL_LOOPS):
         try:
             async with client.messages.stream(
                 model=model,

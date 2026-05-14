@@ -148,7 +148,7 @@ async def collect_all() -> dict[str, dict[str, Any]]:
     coros = {c.id: _safe_collect(c) for c in _REGISTRY.values()}
     results = await asyncio.gather(*coros.values(), return_exceptions=False)
     merged: dict[str, dict[str, Any]] = {}
-    for _c, payload in zip(_REGISTRY.values(), results, strict=False):
+    for payload in results:
         for wid, p in payload.items():
             # First connector to claim a widget id wins; later ones are no-ops.
             merged.setdefault(wid, p)
@@ -168,7 +168,8 @@ async def _safe_collect(c: Connector) -> dict[str, dict[str, Any]]:
         duration_ms = round((time.perf_counter() - start) * 1000, 1)
         log.info(
             "connector %s collect ok %.1fms",
-            c.id, duration_ms,
+            c.id,
+            duration_ms,
             extra={"fields": {"connector": c.id, "ok": True, "duration_ms": duration_ms}},
         )
         return result or {}
@@ -177,7 +178,8 @@ async def _safe_collect(c: Connector) -> dict[str, dict[str, Any]]:
         store.record_sync(c.id, ok=False, error=f"{type(e).__name__}: {e}")
         log.exception(
             "connector %s collect failed (%.1fms)",
-            c.id, duration_ms,
+            c.id,
+            duration_ms,
             extra={"fields": {"connector": c.id, "ok": False, "duration_ms": duration_ms}},
         )
         # Surface the error on every widget the connector claims so the UI

@@ -1,9 +1,19 @@
+/* ESLint config for the Vite + React frontend.
+ *
+ * Run with: npm run lint
+ * Auto-fix with: npm run lint:fix
+ */
 module.exports = {
   root: true,
-  env: { browser: true, es2022: true, node: true },
+  env: {
+    browser: true,
+    es2022: true,
+    node: true,
+  },
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
+    'plugin:react/jsx-runtime',
     'plugin:react-hooks/recommended',
   ],
   parserOptions: {
@@ -11,16 +21,19 @@ module.exports = {
     sourceType: 'module',
     ecmaFeatures: { jsx: true },
   },
-  settings: { react: { version: '18.3' } },
+  settings: {
+    react: { version: 'detect' },
+  },
   plugins: ['react-refresh'],
-  ignorePatterns: ['dist', 'node_modules', 'public/sw.js'],
   rules: {
+    'react-refresh/only-export-components': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     'react/no-unescaped-entities': 'off',
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^(_|React$)' }],
     'no-constant-condition': ['error', { checkLoops: false }],
     'no-inner-declarations': 'off',
-    'react-refresh/only-export-components': 'off',
+    'no-empty': ['error', { allowEmptyCatch: true }],
   },
+  ignorePatterns: ['dist', 'node_modules', 'public/sw.js', '*.config.js', '.eslintrc.cjs'],
 };
