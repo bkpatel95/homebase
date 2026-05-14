@@ -30,21 +30,15 @@ REQUIRED: list[tuple[str, str, str]] = [
 
 
 OPTIONAL_INTEGRATIONS: list[tuple[str, str]] = [
-    ("OURA_TOKEN",
-     "Oura connector will fall back to the OURA_SUMMARY file or render unavailable"),
-    ("PLEX_TOKEN",
-     "Plex 'recently added' will not appear in the media widget"),
-    ("OVERSEERR_API_KEY",
-     "Overseerr 'pending requests' will not appear in the media widget"),
+    ("OURA_TOKEN", "Oura connector will fall back to the OURA_SUMMARY file or render unavailable"),
+    ("PLEX_TOKEN", "Plex 'recently added' will not appear in the media widget"),
+    ("OVERSEERR_API_KEY", "Overseerr 'pending requests' will not appear in the media widget"),
+    ("GMAIL_CREDENTIALS_PATH", "Gmail connector will render unavailable until /api/gmail/auth is run"),
 ]
 
 
 def validate_env() -> None:
-    missing = [
-        (name, desc, hint)
-        for name, desc, hint in REQUIRED
-        if not os.environ.get(name, "").strip()
-    ]
+    missing = [(name, desc, hint) for name, desc, hint in REQUIRED if not os.environ.get(name, "").strip()]
 
     if missing:
         lines = ["", "homebase: required environment variables are missing:"]

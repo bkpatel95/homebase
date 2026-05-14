@@ -29,15 +29,17 @@ ALL_WIDGETS = [
     "system_metrics",
     "prod_health",
     "quick_links",
+    "weather",
 ]
 
-DEFAULT_TICKER_ITEMS = ["prod", "sleep", "markets", "meetings", "cpu"]
+DEFAULT_TICKER_ITEMS = ["prod", "sleep", "weather", "markets", "meetings", "cpu"]
 
 # Time-of-day priority. The first widget in each list becomes column-0 top,
 # the next column-1 top, etc. — interleaved so columns balance out.
 MOOD_PRIORITY = {
     "morning": [
         "health_wellness",
+        "weather",
         "calendar",
         "nutrition",
         "markets",
@@ -50,6 +52,7 @@ MOOD_PRIORITY = {
     "midday": [
         "markets",
         "calendar",
+        "weather",
         "health_wellness",
         "media",
         "nutrition",
@@ -59,6 +62,7 @@ MOOD_PRIORITY = {
         "quick_links",
     ],
     "evening": [
+        "weather",
         "health_wellness",
         "nutrition",
         "media",
