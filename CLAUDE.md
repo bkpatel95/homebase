@@ -31,9 +31,14 @@ ssh bp@100.91.251.82 'cd ~/homebase/deploy && ./deploy-test.sh <branch>'
 
 Defaults to `sprint-1/test-combined` when no branch is given. The script
 auto-clones `~/homebase-test/` on first run, then rebuilds and recreates
-the `daily-bhavi-test` container on host port `8096`. Cloudflare Access
-on `homebase-test.lebcp.com` must be configured manually in the dashboard
-(separate Access app from `homebase.lebcp.com`).
+the `daily-bhavi-test` container on host port `8096`.
+
+Cloudflare Access on `homebase-test.lebcp.com` was provisioned via
+`podman-server/scripts/cf-access-setup.py --service-name "Homebase Test"
+--subdomain homebase-test` — Google SSO only, allow-listed to
+`bhavipatel141@gmail.com`. Re-run that script if the allow list or
+service name needs to change. It's idempotent (updates the existing
+app + policy in place).
 
 The test environment shares the read-only health-data/calendar/recipes
 mounts with prod, but uses its own writable volume at
