@@ -104,6 +104,19 @@ def _ticker_item(key: str, widgets: dict) -> dict | None:
             "suffix": "",
             "status": "bad" if cpu > 85 else "warn" if cpu > 60 else "ok",
         }
+    if key == "weather":
+        w = widgets.get("weather") or {}
+        current = w.get("current") or {}
+        temp = current.get("temp")
+        if not w.get("available") or temp is None:
+            return None
+        unit = w.get("temp_unit") or "°"
+        return {
+            "label": w.get("label") or "Weather",
+            "value": f"{round(float(temp))}{unit}",
+            "suffix": current.get("condition") or "",
+            "status": "ok",
+        }
     return None
 
 

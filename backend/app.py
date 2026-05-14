@@ -15,7 +15,11 @@ Mounted by nginx at /api/*. Routes:
   DEL   /api/chat/{sid}                    — clear a session
   WS    /api/ws                            — broadcast channel for edition_dirty notifications
   GET   /api/whoami                        — echoes the Cloudflare Access user
-  GET   /api/health                        — liveness probe
+  GET   /api/health                        — liveness probe + per-connector staleness
+  GET   /api/weather                       — current conditions + 3-day forecast (Open-Meteo)
+  GET   /api/reminders                     — Apple Reminders (osascript or file fallback)
+  GET   /api/gmail                         — recent unread Gmail messages
+  GET   /api/gmail/auth                    — OAuth bootstrap helper
 """
 
 from __future__ import annotations
@@ -29,7 +33,7 @@ from fastapi.responses import JSONResponse
 
 from .config import validate_env
 from .logging_config import configure_logging
-from .routers import chat, edition, layout, sources, ws
+from .routers import chat, edition, gmail, health, layout, reminders, sources, weather, ws
 
 configure_logging()
 log = logging.getLogger("homebase.app")
@@ -116,18 +120,17 @@ async def request_logger(request: Request, call_next):
     return response
 
 
-@app.get("/api/health")
-async def health():
-    return {"status": "ok"}
-
-
 @app.get("/api/whoami")
 async def whoami(request: Request):
     return {"email": getattr(request.state, "user_email", None)}
 
 
+app.include_router(health.router, prefix="/api")
 app.include_router(edition.router, prefix="/api")
 app.include_router(layout.router, prefix="/api")
 app.include_router(sources.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(ws.router, prefix="/api")
+app.include_router(weather.router, prefix="/api")
+app.include_router(reminders.router, prefix="/api")
+app.include_router(gmail.router, prefix="/api")

@@ -33,6 +33,7 @@ OPTIONAL_INTEGRATIONS: list[tuple[str, str]] = [
     ("OURA_TOKEN", "Oura connector will fall back to the OURA_SUMMARY file or render unavailable"),
     ("PLEX_TOKEN", "Plex 'recently added' will not appear in the media widget"),
     ("OVERSEERR_API_KEY", "Overseerr 'pending requests' will not appear in the media widget"),
+    ("GMAIL_CREDENTIALS_PATH", "Gmail connector will render unavailable until /api/gmail/auth is run"),
 ]
 
 
