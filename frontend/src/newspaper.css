@@ -12,29 +12,35 @@
   --accent: #8a2a1f;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   background-color: var(--paper);
   color: var(--ink);
 }
 
 body {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image:
-    radial-gradient(rgba(0,0,0,0.018) 1px, transparent 1px),
-    radial-gradient(rgba(0,0,0,0.012) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 2px;
+    radial-gradient(rgba(0, 0, 0, 0.018) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.012) 1px, transparent 1px);
+  background-size:
+    3px 3px,
+    7px 7px;
+  background-position:
+    0 0,
+    1px 2px;
 }
 
 /* ── Newspaper typographic primitives ───────────────────────────── */
 
 .masthead-title {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-weight: 900;
   letter-spacing: -0.01em;
   line-height: 0.95;
@@ -42,14 +48,14 @@ body {
 }
 
 .headline {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
   line-height: 1.1;
   color: var(--ink);
 }
 
 .section-eyebrow {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -65,14 +71,14 @@ body {
 }
 
 .byline {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
   font-size: 12px;
   color: var(--ink-soft);
 }
 
 .body-serif {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Georgia, 'Times New Roman', serif;
   color: var(--ink);
 }
 
@@ -91,17 +97,23 @@ body {
 
 /* ── Rules and dividers ─────────────────────────────────────────── */
 
-.rule-thin    { border-color: var(--rule); }
-.rule-thick   { border-color: var(--rule-thick); }
+.rule-thin {
+  border-color: var(--rule);
+}
+.rule-thick {
+  border-color: var(--rule-thick);
+}
 
 .double-rule {
   border-top: 1px solid var(--rule-thick);
-  box-shadow: inset 0 3px 0 var(--paper), inset 0 4px 0 var(--rule-thick);
+  box-shadow:
+    inset 0 3px 0 var(--paper),
+    inset 0 4px 0 var(--rule-thick);
   height: 4px;
 }
 
 .rule-after::after {
-  content: "";
+  content: '';
   display: block;
   border-bottom: 1px solid var(--rule);
   margin-top: 0.75rem;
@@ -116,7 +128,9 @@ body {
 }
 
 @media (min-width: 768px) {
-  .broadsheet { grid-template-columns: 1fr 1fr; }
+  .broadsheet {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (min-width: 1100px) {
@@ -131,7 +145,7 @@ body {
   position: relative;
 }
 .col-rule-right::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 0.25rem;
   bottom: 0.25rem;
@@ -141,17 +155,21 @@ body {
 }
 
 @media (max-width: 1099px) {
-  .col-rule-right.lg-only::after { display: none; }
+  .col-rule-right.lg-only::after {
+    display: none;
+  }
 }
 
 @media (max-width: 767px) {
-  .col-rule-right::after { display: none; }
+  .col-rule-right::after {
+    display: none;
+  }
 }
 
 /* ── Drop cap for lead column ──────────────────────────────────── */
 
 .dropcap::first-letter {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-weight: 900;
   float: left;
   font-size: 3.5rem;
@@ -174,34 +192,59 @@ body {
 
 /* ── Status pills ──────────────────────────────────────────────── */
 
-.dot { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 9999px; }
-.dot-ok   { background: #2f6a3a; }
-.dot-warn { background: #b8870b; }
-.dot-bad  { background: var(--accent); }
+.dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+}
+.dot-ok {
+  background: #2f6a3a;
+}
+.dot-warn {
+  background: #b8870b;
+}
+.dot-bad {
+  background: var(--accent);
+}
 
 /* ── Small refinements ─────────────────────────────────────────── */
 
-.tabular { font-variant-numeric: tabular-nums; }
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
 
-a, a:visited {
+a,
+a:visited {
   color: var(--ink);
   text-decoration: none;
   border-bottom: 1px solid var(--rule);
   transition: border-color 120ms ease;
 }
-a:hover { border-color: var(--accent); color: var(--accent); }
+a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 
 /* Subtle paper grain on cards */
 .card {
-  background: rgba(255,255,255,0.0);
+  background: rgba(255, 255, 255, 0);
 }
 
 /* Loading shimmer that fits the paper aesthetic */
 @keyframes inkfade {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
-.ink-loading { animation: inkfade 1.6s ease-in-out infinite; color: var(--ink-soft); }
+.ink-loading {
+  animation: inkfade 1.6s ease-in-out infinite;
+  color: var(--ink-soft);
+}
 
 /* ── Chat panel ─────────────────────────────────────────────────────────── */
 
@@ -251,7 +294,9 @@ a:hover { border-color: var(--accent); color: var(--accent); }
 }
 
 @media (max-width: 480px) {
-  .sources-panel { width: 100vw; }
+  .sources-panel {
+    width: 100vw;
+  }
 }
 
 .masthead-gear {
@@ -262,7 +307,9 @@ a:hover { border-color: var(--accent); color: var(--accent); }
   border: 1px solid var(--rule);
   background: transparent;
   cursor: pointer;
-  transition: border-color 120ms ease, color 120ms ease;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease;
   font-size: 14px;
   line-height: 1;
   color: var(--ink-soft);

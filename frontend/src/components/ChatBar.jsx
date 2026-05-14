@@ -90,7 +90,9 @@ export default function ChatBar({ onLayoutChange }) {
                   type="button"
                   onClick={clear}
                   className="meta-sans uppercase tracking-wider px-2 py-1.5 hover:underline"
-                >Clear</button>
+                >
+                  Clear
+                </button>
               )}
               <button
                 type="button"
@@ -98,7 +100,9 @@ export default function ChatBar({ onLayoutChange }) {
                 aria-label="Close chat"
                 className="min-w-[44px] min-h-[44px] grid place-items-center hover:bg-paperdark rounded"
               >
-                <span aria-hidden="true" className="text-xl leading-none">×</span>
+                <span aria-hidden="true" className="text-xl leading-none">
+                  ×
+                </span>
               </button>
             </div>
           </header>
@@ -106,37 +110,45 @@ export default function ChatBar({ onLayoutChange }) {
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {!hasMessages && (
               <div className="py-6">
-                <p className="body-serif italic mb-3">
-                  Welcome to the editor's desk. Try:
-                </p>
+                <p className="body-serif italic mb-3">Welcome to the editor's desk. Try:</p>
                 <ul className="space-y-1.5">
                   {[
                     'Hide the media section.',
                     'Move markets to the top.',
-                    "How did I sleep last night?",
+                    'How did I sleep last night?',
                     "What's the S&P doing today?",
                     'Reset the layout.',
                   ].map((q) => (
                     <li key={q}>
                       <button
                         type="button"
-                        onClick={() => { setDraft(q); inputRef.current?.focus(); }}
+                        onClick={() => {
+                          setDraft(q);
+                          inputRef.current?.focus();
+                        }}
                         className="text-left meta-sans hover:text-accent underline-offset-2 hover:underline"
-                      >{q}</button>
+                      >
+                        {q}
+                      </button>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {messages.map((m) => <Bubble key={m.id} msg={m} />)}
+            {messages.map((m) => (
+              <Bubble key={m.id} msg={m} />
+            ))}
 
-            {sending && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.text && (
-              <TypingIndicator />
-            )}
+            {sending &&
+              messages[messages.length - 1]?.role === 'assistant' &&
+              !messages[messages.length - 1]?.text && <TypingIndicator />}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t rule-thick p-3 flex items-end gap-2 bg-paperdark/40">
+          <form
+            onSubmit={handleSubmit}
+            className="border-t rule-thick p-3 flex items-end gap-2 bg-paperdark/40"
+          >
             <textarea
               ref={inputRef}
               value={draft}
@@ -148,13 +160,19 @@ export default function ChatBar({ onLayoutChange }) {
                          focus:outline-none focus:border-ink"
             />
             {sending ? (
-              <button type="button" onClick={abort}
-                className="min-h-[44px] px-4 border rule-thick body-serif hover:bg-paperdark">
+              <button
+                type="button"
+                onClick={abort}
+                className="min-h-[44px] px-4 border rule-thick body-serif hover:bg-paperdark"
+              >
                 Stop
               </button>
             ) : (
-              <button type="submit" disabled={!draft.trim()}
-                className="min-h-[44px] px-4 border rule-thick body-serif hover:bg-paperdark disabled:opacity-40 disabled:cursor-not-allowed">
+              <button
+                type="submit"
+                disabled={!draft.trim()}
+                className="min-h-[44px] px-4 border rule-thick body-serif hover:bg-paperdark disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 Send
               </button>
             )}
@@ -185,13 +203,15 @@ function Bubble({ msg }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[85%] px-3.5 py-2 ${isUser
-            ? 'bg-paperdark border rule-thin'
-            : 'bg-paper border rule-thin'} `}
+        className={`max-w-[85%] px-3.5 py-2 ${
+          isUser ? 'bg-paperdark border rule-thin' : 'bg-paper border rule-thin'
+        } `}
       >
         {msg.toolCalls?.length > 0 && (
           <div className="space-y-1 mb-2">
-            {msg.toolCalls.map((tc) => <ToolChip key={tc.id} call={tc} />)}
+            {msg.toolCalls.map((tc) => (
+              <ToolChip key={tc.id} call={tc} />
+            ))}
           </div>
         )}
         {msg.text && (
@@ -210,12 +230,18 @@ function Bubble({ msg }) {
 function ToolChip({ call }) {
   const label = toolLabel(call);
   const tone =
-    call.status === 'error' ? 'border-accent text-accent' :
-    call.status === 'running' ? 'border-rule-thick text-inksoft ink-loading' :
-    'border-rule-thick text-ink';
+    call.status === 'error'
+      ? 'border-accent text-accent'
+      : call.status === 'running'
+        ? 'border-rule-thick text-inksoft ink-loading'
+        : 'border-rule-thick text-ink';
   return (
-    <div className={`meta-sans uppercase tracking-wider px-2 py-1 border ${tone} inline-flex items-center gap-2`}>
-      <span aria-hidden="true">{call.status === 'done' ? '✓' : call.status === 'error' ? '!' : '…'}</span>
+    <div
+      className={`meta-sans uppercase tracking-wider px-2 py-1 border ${tone} inline-flex items-center gap-2`}
+    >
+      <span aria-hidden="true">
+        {call.status === 'done' ? '✓' : call.status === 'error' ? '!' : '…'}
+      </span>
       <span>{label}</span>
     </div>
   );

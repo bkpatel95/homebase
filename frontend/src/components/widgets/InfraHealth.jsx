@@ -19,12 +19,17 @@ export default function InfraHealth({ data }) {
 
       <div className="flex items-baseline gap-4 mb-3">
         <div>
-          <div className="data-num text-3xl leading-none">{containers_up}<span className="text-inksoft text-base">/{containers_total}</span></div>
+          <div className="data-num text-3xl leading-none">
+            {containers_up}
+            <span className="text-inksoft text-base">/{containers_total}</span>
+          </div>
           <div className="meta-sans uppercase tracking-wider">running</div>
         </div>
         {containers_down > 0 && (
           <div>
-            <div className="data-num text-3xl leading-none text-[var(--accent)]">{containers_down}</div>
+            <div className="data-num text-3xl leading-none text-[var(--accent)]">
+              {containers_down}
+            </div>
             <div className="meta-sans uppercase tracking-wider">down</div>
           </div>
         )}

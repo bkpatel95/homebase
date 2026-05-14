@@ -15,7 +15,6 @@ from typing import Any
 from .. import layout_store
 from .tools import pretty
 
-
 SYSTEM_TEMPLATE = """You are the editor of *The Daily Bhavi*, a personal newspaper for Bhavi Patel that lives at homebase.lebcp.com. The newspaper is composed of widgets (sections) laid out in three columns under a masthead, with a ticker bar of live status pills.
 
 ## Voice
@@ -59,14 +58,14 @@ Brief, declarative, a touch of editorial dry wit. Think morning paper, not chatb
 def _widget_table() -> str:
     descriptions = {
         "health_wellness": "Oura Ring vitals (sleep, readiness, HRV, HR, activity).",
-        "calendar":        "Today's events from Google Calendar (file-backed).",
-        "markets":          "S&P, NASDAQ, Dow via Stooq + BTC via CoinGecko.",
-        "media":           "Plex recently-added + Overseerr pending requests.",
-        "nutrition":       "Today's meal plan parsed from recipe markdown files.",
-        "infrastructure":  "Container roll call (podman-exporter).",
-        "system_metrics":  "Host CPU, memory, disk, load, uptime (node-exporter).",
-        "prod_health":     "Latest prod-health audit JSON.",
-        "quick_links":     "Static links to all *.lebcp.com services.",
+        "calendar": "Today's events from Google Calendar (file-backed).",
+        "markets": "S&P, NASDAQ, Dow via Stooq + BTC via CoinGecko.",
+        "media": "Plex recently-added + Overseerr pending requests.",
+        "nutrition": "Today's meal plan parsed from recipe markdown files.",
+        "infrastructure": "Container roll call (podman-exporter).",
+        "system_metrics": "Host CPU, memory, disk, load, uptime (node-exporter).",
+        "prod_health": "Latest prod-health audit JSON.",
+        "quick_links": "Static links to all *.lebcp.com services.",
     }
     rows = []
     for w in layout_store.ALL_WIDGETS:

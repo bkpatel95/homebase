@@ -53,11 +53,9 @@ export default function SourcesPanel({ open, onClose, onChange }) {
       if (!m.has(k)) m.set(k, []);
       m.get(k).push(s);
     }
-    return CATEGORY_ORDER
-      .map((k) => [k, m.get(k) || []])
-      .concat(
-        Array.from(m.entries()).filter(([k]) => !CATEGORY_ORDER.includes(k))
-      );
+    return CATEGORY_ORDER.map((k) => [k, m.get(k) || []]).concat(
+      Array.from(m.entries()).filter(([k]) => !CATEGORY_ORDER.includes(k))
+    );
   }, [sources]);
 
   function flashMsg(text, tone = 'ok') {
@@ -79,7 +77,9 @@ export default function SourcesPanel({ open, onClose, onChange }) {
     try {
       const result = await test(id);
       flashMsg(
-        result?.ok ? `Test ok: ${result.detail || 'reachable'}` : `Test failed: ${result?.detail || 'unknown'}`,
+        result?.ok
+          ? `Test ok: ${result.detail || 'reachable'}`
+          : `Test failed: ${result?.detail || 'unknown'}`,
         result?.ok ? 'ok' : 'bad'
       );
       return result;
@@ -125,20 +125,26 @@ export default function SourcesPanel({ open, onClose, onChange }) {
               type="button"
               onClick={refresh}
               className="meta-sans uppercase tracking-wider px-2 py-1.5 hover:underline"
-            >Refresh</button>
+            >
+              Refresh
+            </button>
             <button
               type="button"
               onClick={onClose}
               aria-label="Close sources panel"
               className="min-w-[44px] min-h-[44px] grid place-items-center hover:bg-paperdark rounded"
             >
-              <span aria-hidden="true" className="text-xl leading-none">×</span>
+              <span aria-hidden="true" className="text-xl leading-none">
+                ×
+              </span>
             </button>
           </div>
         </header>
 
         {flash && (
-          <div className={`px-4 py-2 meta-sans border-b rule-thin ${flash.tone === 'bad' ? 'text-accent' : ''}`}>
+          <div
+            className={`px-4 py-2 meta-sans border-b rule-thin ${flash.tone === 'bad' ? 'text-accent' : ''}`}
+          >
             {flash.text}
           </div>
         )}
@@ -149,7 +155,7 @@ export default function SourcesPanel({ open, onClose, onChange }) {
 
           {!loading && !error && !selected && (
             <div className="px-4 py-3 space-y-5">
-              {grouped.map(([cat, list]) => (
+              {grouped.map(([cat, list]) =>
                 list.length === 0 ? null : (
                   <section key={cat}>
                     <div className="section-eyebrow mb-2">{CATEGORY_LABEL[cat] || cat}</div>
@@ -161,7 +167,12 @@ export default function SourcesPanel({ open, onClose, onChange }) {
                             onClick={() => setSelectedId(s.id)}
                             className="w-full text-left bg-paper border rule-thin hover:border-rule-thick px-3 py-2.5 flex items-start gap-3"
                           >
-                            <span aria-hidden="true" className="text-lg leading-none mt-0.5 w-6 text-center">{s.icon}</span>
+                            <span
+                              aria-hidden="true"
+                              className="text-lg leading-none mt-0.5 w-6 text-center"
+                            >
+                              {s.icon}
+                            </span>
                             <span className="flex-1 min-w-0">
                               <span className="flex items-center justify-between gap-2">
                                 <span className="headline text-[1rem] truncate">{s.name}</span>
@@ -175,7 +186,10 @@ export default function SourcesPanel({ open, onClose, onChange }) {
                                     ? 'Not yet synced'
                                     : 'Not configured'}
                                 {s.last_error && (
-                                  <span className="text-accent"> · {truncate(s.last_error, 60)}</span>
+                                  <span className="text-accent">
+                                    {' '}
+                                    · {truncate(s.last_error, 60)}
+                                  </span>
                                 )}
                               </span>
                             </span>
@@ -185,7 +199,7 @@ export default function SourcesPanel({ open, onClose, onChange }) {
                     </ul>
                   </section>
                 )
-              ))}
+              )}
               {sources.length === 0 && (
                 <p className="body-serif italic text-center py-10">No connectors registered.</p>
               )}
@@ -260,12 +274,21 @@ function ConnectorEditor({ source, onBack, onSave, onTest, onRemove }) {
 
   async function handleTest() {
     setSubmitting(true);
-    try { await onTest(); } finally { setSubmitting(false); }
+    try {
+      await onTest();
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleRemove() {
     setSubmitting(true);
-    try { await onRemove(); } finally { setSubmitting(false); setConfirmRemove(false); }
+    try {
+      await onRemove();
+    } finally {
+      setSubmitting(false);
+      setConfirmRemove(false);
+    }
   }
 
   const schema = source.config_schema || [];
@@ -276,17 +299,19 @@ function ConnectorEditor({ source, onBack, onSave, onTest, onRemove }) {
         type="button"
         onClick={onBack}
         className="meta-sans uppercase tracking-wider hover:underline -ml-1 px-1"
-      >← All sources</button>
+      >
+        ← All sources
+      </button>
 
       <header>
         <div className="flex items-center gap-2 mb-1">
-          <span aria-hidden="true" className="text-xl">{source.icon}</span>
+          <span aria-hidden="true" className="text-xl">
+            {source.icon}
+          </span>
           <h3 className="headline text-[1.4rem]">{source.name}</h3>
         </div>
         <p className="body-serif text-[15px] leading-snug">{source.description}</p>
-        <p className="meta-sans mt-2">
-          Feeds: {(source.widget_ids || []).join(', ') || '—'}
-        </p>
+        <p className="meta-sans mt-2">Feeds: {(source.widget_ids || []).join(', ') || '—'}</p>
       </header>
 
       <div className="meta-sans flex items-center gap-3 border rule-thin px-3 py-2 bg-paperdark/40">
@@ -323,20 +348,26 @@ function ConnectorEditor({ source, onBack, onSave, onTest, onRemove }) {
           type="submit"
           disabled={submitting}
           className="min-h-[44px] px-4 border rule-thick body-serif hover:bg-paperdark disabled:opacity-40"
-        >Save</button>
+        >
+          Save
+        </button>
         <button
           type="button"
           onClick={handleTest}
           disabled={submitting}
           className="min-h-[44px] px-4 border rule-thin body-serif hover:bg-paperdark disabled:opacity-40"
-        >Test connection</button>
+        >
+          Test connection
+        </button>
         <span className="flex-1" />
         {!confirmRemove ? (
           <button
             type="button"
             onClick={() => setConfirmRemove(true)}
             className="meta-sans uppercase tracking-wider px-2 py-1 hover:underline text-accent"
-          >Remove</button>
+          >
+            Remove
+          </button>
         ) : (
           <span className="meta-sans flex items-center gap-2">
             Remove stored config?
@@ -345,12 +376,16 @@ function ConnectorEditor({ source, onBack, onSave, onTest, onRemove }) {
               onClick={handleRemove}
               disabled={submitting}
               className="meta-sans uppercase tracking-wider px-2 py-1 border rule-thin hover:bg-paperdark text-accent"
-            >Yes, remove</button>
+            >
+              Yes, remove
+            </button>
             <button
               type="button"
               onClick={() => setConfirmRemove(false)}
               className="meta-sans uppercase tracking-wider px-2 py-1 hover:underline"
-            >Cancel</button>
+            >
+              Cancel
+            </button>
           </span>
         )}
       </div>
@@ -368,21 +403,30 @@ function Field({ field, value, onChange, valueState }) {
     value,
     placeholder: placeholder || (fromEnv ? '(provided by environment)' : ''),
     onChange: (e) => onChange(e.target.value),
-    className: 'w-full bg-paper border rule-thin px-3 py-2 body-serif focus:outline-none focus:border-ink',
+    className:
+      'w-full bg-paper border rule-thin px-3 py-2 body-serif focus:outline-none focus:border-ink',
   };
 
   return (
     <div>
-      <label htmlFor={`src-field-${name}`} className="meta-sans uppercase tracking-wider flex items-center justify-between mb-1">
-        <span>{label}{required && <span className="text-accent"> *</span>}</span>
-        {fromEnv && <span className="italic normal-case tracking-normal">using ${env_fallback}</span>}
+      <label
+        htmlFor={`src-field-${name}`}
+        className="meta-sans uppercase tracking-wider flex items-center justify-between mb-1"
+      >
+        <span>
+          {label}
+          {required && <span className="text-accent"> *</span>}
+        </span>
+        {fromEnv && (
+          <span className="italic normal-case tracking-normal">using ${env_fallback}</span>
+        )}
       </label>
       {type === 'textarea' ? (
         <textarea {...inputProps} rows={5} />
       ) : (
         <input
           {...inputProps}
-          type={isSecret ? 'password' : (type === 'number' ? 'number' : 'text')}
+          type={isSecret ? 'password' : type === 'number' ? 'number' : 'text'}
           autoComplete={isSecret ? 'new-password' : 'off'}
         />
       )}
@@ -400,7 +444,9 @@ function formatRelative(iso) {
     if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
     return d.toLocaleString();
-  } catch { return iso; }
+  } catch {
+    return iso;
+  }
 }
 
 function truncate(s, n) {

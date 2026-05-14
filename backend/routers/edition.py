@@ -7,7 +7,7 @@ their widget payloads. New connectors appear in the edition automatically.
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter
@@ -55,7 +55,9 @@ def _ticker_item(key: str, widgets: dict) -> dict | None:
         if not total:
             return None
         return {
-            "label": "Prod", "value": f"{up}/{total}", "suffix": "up",
+            "label": "Prod",
+            "value": f"{up}/{total}",
+            "suffix": "up",
             "status": "bad" if (infra.get("containers_down") or 0) else "ok",
         }
     if key == "sleep":
@@ -64,7 +66,9 @@ def _ticker_item(key: str, widgets: dict) -> dict | None:
             return None
         score = hw["sleep_score"]
         return {
-            "label": "Sleep", "value": str(score), "suffix": "score",
+            "label": "Sleep",
+            "value": str(score),
+            "suffix": "score",
             "status": "ok" if score >= 80 else "warn" if score >= 65 else "bad",
         }
     if key == "markets":
@@ -75,14 +79,18 @@ def _ticker_item(key: str, widgets: dict) -> dict | None:
         pct = sp["pct_change"]
         sign = "+" if pct >= 0 else ""
         return {
-            "label": "S&P", "value": f"{sign}{pct:.2f}%", "suffix": "today",
+            "label": "S&P",
+            "value": f"{sign}{pct:.2f}%",
+            "suffix": "today",
             "status": "ok" if pct >= 0 else "bad",
         }
     if key == "meetings":
         cal = widgets.get("calendar") or {}
         n = cal.get("count", 0)
         return {
-            "label": "Meetings", "value": str(n), "suffix": "today",
+            "label": "Meetings",
+            "value": str(n),
+            "suffix": "today",
             "status": "warn" if n >= 5 else "ok" if n else "idle",
         }
     if key == "cpu":
@@ -91,7 +99,9 @@ def _ticker_item(key: str, widgets: dict) -> dict | None:
         if cpu is None:
             return None
         return {
-            "label": "CPU", "value": f"{cpu:.0f}%", "suffix": "",
+            "label": "CPU",
+            "value": f"{cpu:.0f}%",
+            "suffix": "",
             "status": "bad" if cpu > 85 else "warn" if cpu > 60 else "ok",
         }
     return None
@@ -107,7 +117,7 @@ async def get_edition():
     for wid in layout_store.ALL_WIDGETS:
         widgets.setdefault(wid, {})
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     mood = _edition_mood(now)
 
     available = {k: _is_available(k, v) for k, v in widgets.items()}

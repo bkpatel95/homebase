@@ -23,8 +23,8 @@ import logging
 import pkgutil
 from typing import Any
 
-from .base import Connector, ConfigField
 from . import store
+from .base import ConfigField, Connector
 
 log = logging.getLogger("homebase.connectors")
 
@@ -52,12 +52,10 @@ def _discover() -> None:
             log.warning("connector in %s has no id, skipping", mod_info.name)
             continue
         if instance.id in _REGISTRY:
-            log.warning("duplicate connector id %s (from %s) — keeping first",
-                        instance.id, mod_info.name)
+            log.warning("duplicate connector id %s (from %s) — keeping first", instance.id, mod_info.name)
             continue
         _REGISTRY[instance.id] = instance
-        log.info("registered connector: %s (widgets=%s)",
-                 instance.id, ",".join(instance.widget_ids))
+        log.info("registered connector: %s (widgets=%s)", instance.id, ",".join(instance.widget_ids))
 
 
 _discover()
@@ -77,9 +75,9 @@ def get_connector(connector_id: str) -> Connector | None:
 def _status_for(c: Connector, record: dict[str, Any]) -> str:
     """Compute a UI-facing status string.
 
-      - "error":        last test/sync failed and we have an explicit error
-      - "connected":    configured (stored or env-fallback) and no recent failure
-      - "disconnected": missing required fields
+    - "error":        last test/sync failed and we have an explicit error
+    - "connected":    configured (stored or env-fallback) and no recent failure
+    - "disconnected": missing required fields
     """
     stored = record.get("config") or {}
     if not c.is_configured(stored):
@@ -104,6 +102,7 @@ def describe_all() -> list[dict[str, Any]]:
             env_v = ""
             if f.env_fallback:
                 import os
+
                 env_v = os.environ.get(f.env_fallback, "") or ""
             present = bool(str(resolved.get(f.name) or "").strip())
             config_values[f.name] = {
@@ -113,18 +112,20 @@ def describe_all() -> list[dict[str, Any]]:
                 # Echo a redacted preview for non-secret fields only.
                 "preview": (stored_v if f.type != "password" else "") if stored_v else "",
             }
-        out.append({
-            **c.describe(),
-            "status":          _status_for(c, rec),
-            "configured":      c.is_configured(stored),
-            "missing_required": c.missing_required(resolved),
-            "last_sync":       rec.get("last_sync"),
-            "last_status":     rec.get("last_status"),
-            "last_error":      rec.get("last_error"),
-            "last_tested_at":  rec.get("last_tested_at"),
-            "configured_at":   rec.get("configured_at"),
-            "values":          config_values,
-        })
+        out.append(
+            {
+                **c.describe(),
+                "status": _status_for(c, rec),
+                "configured": c.is_configured(stored),
+                "missing_required": c.missing_required(resolved),
+                "last_sync": rec.get("last_sync"),
+                "last_status": rec.get("last_status"),
+                "last_error": rec.get("last_error"),
+                "last_tested_at": rec.get("last_tested_at"),
+                "configured_at": rec.get("configured_at"),
+                "values": config_values,
+            }
+        )
     return out
 
 
@@ -142,10 +143,11 @@ async def collect_widget(widget_id: str) -> dict[str, Any]:
 async def collect_all() -> dict[str, dict[str, Any]]:
     """Run every connector concurrently and merge their widget payloads."""
     import asyncio
+
     coros = {c.id: _safe_collect(c) for c in _REGISTRY.values()}
     results = await asyncio.gather(*coros.values(), return_exceptions=False)
     merged: dict[str, dict[str, Any]] = {}
-    for c, payload in zip(_REGISTRY.values(), results):
+    for payload in results:
         for wid, p in payload.items():
             # First connector to claim a widget id wins; later ones are no-ops.
             merged.setdefault(wid, p)
@@ -167,8 +169,7 @@ async def _safe_collect(c: Connector) -> dict[str, dict[str, Any]]:
         log.exception("connector %s collect failed", c.id)
         # Surface the error on every widget the connector claims so the UI
         # doesn't silently render blanks.
-        return {wid: {"error": f"{type(e).__name__}: {e}", "available": False}
-                for wid in c.widget_ids}
+        return {wid: {"error": f"{type(e).__name__}: {e}", "available": False} for wid in c.widget_ids}
 
 
 async def test_connector(connector_id: str) -> dict[str, Any]:
