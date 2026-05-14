@@ -13,8 +13,18 @@ build/
 # Environment + secrets
 .env
 .env.local
+.env.*
+!.env.example
 *.secret
 deploy/.env
+*.pem
+*.key
+*.crt
+*.p12
+id_rsa*
+id_ed25519*
+credentials*.json
+service-account*.json
 
 # Editor / OS
 .DS_Store
