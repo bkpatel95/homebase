@@ -44,7 +44,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"backend/tests/**" = ["B011", "S101"]   # asserts and assert False are fine in tests
+"backend/tests/**" = ["B011"]   # assert False is fine in tests
 
 [tool.ruff.format]
 quote-style = "double"

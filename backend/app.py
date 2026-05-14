@@ -20,12 +20,41 @@ Mounted by nginx at /api/*. Routes:
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .logging_config import configure_logging
 from .routers import chat, edition, layout, sources, ws
+
+configure_logging()
+log = logging.getLogger("homebase.app")
+req_log = logging.getLogger("homebase.request")
+
+# Optional Sentry. The app works fine without it — the SDK is only imported
+# and initialized when SENTRY_DSN is set.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.environ.get("ENV", "production"),
+        release=os.environ.get("BUILD_VERSION") or None,
+        traces_sample_rate=0.1,
+    )
+    log.info(
+        "sentry initialized",
+        extra={
+            "fields": {
+                "env": os.environ.get("ENV", "production"),
+                "release": os.environ.get("BUILD_VERSION") or None,
+            }
+        },
+    )
 
 ALLOWED_EMAILS = {
     e.strip().lower() for e in os.environ.get("ALLOWED_EMAILS", "bhavipatel141@gmail.com").split(",") if e.strip()
@@ -35,6 +64,9 @@ REQUIRE_AUTH = os.environ.get("REQUIRE_AUTH", "true").lower() in ("1", "true", "
 app = FastAPI(title="The Daily Bhavi", version="0.3.0")
 
 
+# Middlewares stack in reverse-registration order: the auth guard is
+# registered first so it runs *inside* the request logger, which means every
+# request — including 403s from the guard — is logged with its final status.
 @app.middleware("http")
 async def cloudflare_access_guard(request: Request, call_next):
     # /api/health bypasses auth so podman healthchecks work.
@@ -52,6 +84,29 @@ async def cloudflare_access_guard(request: Request, call_next):
         )
     request.state.user_email = email
     return await call_next(request)
+
+
+@app.middleware("http")
+async def request_logger(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+    req_log.info(
+        "%s %s %d %.1fms",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+        extra={
+            "fields": {
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": round(duration_ms, 1),
+            }
+        },
+    )
+    return response
 
 
 @app.get("/api/health")
