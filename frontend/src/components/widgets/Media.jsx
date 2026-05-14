@@ -1,4 +1,6 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 function timeAgo(iso) {
   if (!iso) return '';
@@ -10,17 +12,40 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">Arts &amp; Leisure</div>
+          <h3 className="headline text-[1.35rem] mt-1">The Marquee</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
 export default function Media({ data }) {
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="media" detail={data.error} />
+      </section>
+    );
+  }
+
   if (!data?.available) return null;
+
   const recent = data.recently_added || [];
   const pending = data.pending_requests || [];
 
+  if (!recent.length && !pending.length) return null;
+
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">Arts & Leisure</div>
-        <h3 className="headline text-[1.35rem] mt-1">The Marquee</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       {recent.length > 0 && (
         <>

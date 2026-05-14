@@ -1,4 +1,6 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 const ACCENTS = ['#8a2a1f', '#3b5d4a', '#6b4a8a', '#a36a1f', '#1f4a6a'];
 
@@ -17,16 +19,37 @@ function isAllDay(ev) {
   return ev.all_day === true || (ev.start && ev.start.length === 10);
 }
 
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">The Schedule</div>
+          <h3 className="headline text-[1.35rem] mt-1">Today's Calendar</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
 export default function Calendar({ data }) {
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="calendar" detail={data.error} />
+      </section>
+    );
+  }
+
   if (!data?.available) return null;
   const events = data.events || [];
+  if (events.length === 0) return null;
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">The Schedule</div>
-        <h3 className="headline text-[1.35rem] mt-1">Today's Calendar</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       <ul className="space-y-2">
         {events.map((ev, i) => {

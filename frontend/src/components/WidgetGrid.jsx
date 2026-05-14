@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import InfraHealth from './widgets/InfraHealth.jsx';
 import SystemMetrics from './widgets/SystemMetrics.jsx';
 import ProdHealth from './widgets/ProdHealth.jsx';
@@ -8,10 +8,15 @@ import Calendar from './widgets/Calendar.jsx';
 import Markets from './widgets/Markets.jsx';
 import Media from './widgets/Media.jsx';
 import Nutrition from './widgets/Nutrition.jsx';
+import Weather from './widgets/Weather.jsx';
+import Reminders from './widgets/Reminders.jsx';
+import Gmail from './widgets/Gmail.jsx';
 
 // Server is the source of truth for column order, visibility, and ticker.
 // This file is now pure presentation — given `edition.layout.columns`, render
-// each widget into its slot.
+// each widget into its slot. Widgets that return `null` (no data, no error)
+// emit no DOM, so the parent flex column's `gap` naturally reflows around
+// them and the broadsheet doesn't leave empty boxes behind.
 
 const COMPONENT_FOR = {
   infrastructure: (w) => <InfraHealth data={w.infrastructure} />,
@@ -23,6 +28,10 @@ const COMPONENT_FOR = {
   markets: (w) => <Markets data={w.markets} />,
   media: (w) => <Media data={w.media} />,
   nutrition: (w) => <Nutrition data={w.nutrition} />,
+  // Self-fetching widgets pull from their own endpoint — `data` is unused.
+  weather: () => <Weather />,
+  reminders: () => <Reminders />,
+  gmail: () => <Gmail />,
 };
 
 function LeadStory({ edition }) {
@@ -141,9 +150,13 @@ export default function WidgetGrid({ edition }) {
                 key={ci}
                 className={`flex flex-col gap-6 ${isLast ? '' : 'col-rule-right lg-only'}`}
               >
-                {keys.map((k) => (
-                  <div key={k}>{COMPONENT_FOR[k]?.(widgets) || null}</div>
-                ))}
+                {keys.map((k) => {
+                  const render = COMPONENT_FOR[k];
+                  if (!render) return null;
+                  // Fragment (not <div>) keeps null-returning widgets from
+                  // leaving an empty flex child that pads the column gap.
+                  return <Fragment key={k}>{render(widgets)}</Fragment>;
+                })}
               </div>
             );
           })}

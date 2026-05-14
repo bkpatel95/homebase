@@ -22,6 +22,9 @@ N_COLUMNS = 3
 ALL_WIDGETS = [
     "health_wellness",
     "calendar",
+    "weather",
+    "reminders",
+    "gmail",
     "markets",
     "media",
     "nutrition",
@@ -29,7 +32,6 @@ ALL_WIDGETS = [
     "system_metrics",
     "prod_health",
     "quick_links",
-    "weather",
 ]
 
 DEFAULT_TICKER_ITEMS = ["prod", "sleep", "weather", "markets", "meetings", "cpu"]
@@ -41,6 +43,8 @@ MOOD_PRIORITY = {
         "health_wellness",
         "weather",
         "calendar",
+        "reminders",
+        "gmail",
         "nutrition",
         "markets",
         "media",
@@ -52,7 +56,9 @@ MOOD_PRIORITY = {
     "midday": [
         "markets",
         "calendar",
+        "reminders",
         "weather",
+        "gmail",
         "health_wellness",
         "media",
         "nutrition",
@@ -62,6 +68,8 @@ MOOD_PRIORITY = {
         "quick_links",
     ],
     "evening": [
+        "reminders",
+        "gmail",
         "weather",
         "health_wellness",
         "nutrition",
