@@ -1,6 +1,7 @@
 import React from 'react';
 import StalenessBadge from '../StalenessBadge.jsx';
 import EmptyState from '../EmptyState.jsx';
+import NotConfigured from '../NotConfigured.jsx';
 import { useResource } from '../../hooks/useResource.js';
 
 function timeAgo(iso) {
@@ -84,7 +85,19 @@ export default function Gmail() {
     );
   }
 
-  if (!data || data.available === false) return null;
+  if (data && data.available === false) {
+    if (data.reason) {
+      return (
+        <NotConfigured
+          label="Gmail"
+          hint="Authorize Gmail at /api/gmail/auth to bring the inbox preview back."
+          reason={data.reason}
+        />
+      );
+    }
+    return null;
+  }
+  if (!data) return null;
 
   const messages = (data.messages || data.unread || []).slice(0, 6);
   if (!messages.length) return null; // empty inbox → collapse

@@ -89,8 +89,8 @@ function Forecast({ days }) {
         <li key={d.date || i} className="py-1.5 flex items-baseline justify-between gap-3">
           <div className="flex items-baseline gap-2">
             <span className="headline text-[1rem]">{weekdayLabel(d.date, i)}</span>
-            {d.conditions && (
-              <span className="meta-sans truncate max-w-[10rem]">{d.conditions}</span>
+            {d.condition && (
+              <span className="meta-sans truncate max-w-[10rem]">{d.condition}</span>
             )}
           </div>
           <span className="data-num tabular text-right whitespace-nowrap">
@@ -144,8 +144,10 @@ export default function Weather() {
 
   const current = data.current || {};
   const forecast = data.forecast || data.daily || [];
-  const hourly = data.hourly || [];
-  const location = data.location || data.city || '';
+  const hourly = data.hourly_today || data.hourly || [];
+  const location = data.label || data.location || data.city || '';
+  const todayHi = forecast[0]?.high;
+  const todayLo = forecast[0]?.low;
   const timestamp = data.collected_at || data.updated_at;
 
   return (
@@ -155,17 +157,17 @@ export default function Weather() {
       <div className="flex items-baseline justify-between gap-3 mb-2">
         <div>
           <div className="data-num text-4xl leading-none">{fmtTemp(current.temp)}</div>
-          {current.conditions && (
-            <div className="body-serif italic text-[14px] mt-1">{current.conditions}</div>
+          {current.condition && (
+            <div className="body-serif italic text-[14px] mt-1">{current.condition}</div>
           )}
         </div>
         <div className="text-right">
-          {current.feels_like != null && (
-            <div className="meta-sans">Feels {fmtTemp(current.feels_like)}</div>
+          {current.apparent_temp != null && (
+            <div className="meta-sans">Feels {fmtTemp(current.apparent_temp)}</div>
           )}
-          {current.high != null && current.low != null && (
+          {todayHi != null && todayLo != null && (
             <div className="meta-sans tabular">
-              H {fmtTemp(current.high)} · L {fmtTemp(current.low)}
+              H {fmtTemp(todayHi)} · L {fmtTemp(todayLo)}
             </div>
           )}
           {location && <div className="meta-sans truncate max-w-[10rem]">{location}</div>}
@@ -178,7 +180,7 @@ export default function Weather() {
       <Forecast days={forecast} />
 
       <p className="byline mt-3">
-        Filed from {data.source || 'the weather wire'}
+        Filed from {data.source || 'Open-Meteo'}
         {location ? ` · ${location}` : ''}.
       </p>
     </section>

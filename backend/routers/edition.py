@@ -49,7 +49,11 @@ def _is_available(widget_id: str, payload: dict | None) -> bool:
         return widget_id in ALWAYS_AVAILABLE
     if widget_id in ALWAYS_AVAILABLE:
         return True
-    return bool(payload.get("available"))
+    # `available: true` means we have real data. `reason` / `error` mean the
+    # connector ran but had nothing to return — the widget renders a
+    # "not configured" or empty-state card in that case, so the slot needs
+    # to stay in the layout.
+    return bool(payload.get("available") or payload.get("reason") or payload.get("error"))
 
 
 def _build_ticker(widgets: dict, items: list[str]) -> list[dict]:

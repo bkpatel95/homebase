@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import StalenessBadge from '../StalenessBadge.jsx';
 import EmptyState from '../EmptyState.jsx';
+import NotConfigured from '../NotConfigured.jsx';
 import { useResource } from '../../hooks/useResource.js';
 
 function isOverdue(due) {
@@ -118,7 +119,19 @@ export default function Reminders() {
     );
   }
 
-  if (!data || data.available === false) return null;
+  if (data && data.available === false) {
+    if (data.reason) {
+      return (
+        <NotConfigured
+          label="Reminders"
+          hint="Grant Reminders access in System Settings → Privacy, or point REMINDERS_PATH at a synced JSON file."
+          reason={data.reason}
+        />
+      );
+    }
+    return null;
+  }
+  if (!data) return null;
 
   if (!groups.length) return null; // collapse: nothing outstanding
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import StalenessBadge from '../StalenessBadge.jsx';
 import EmptyState from '../EmptyState.jsx';
+import NotConfigured from '../NotConfigured.jsx';
 
 function MetricBox({ label, value, unit, tone = 'paper' }) {
   const toneClass =
@@ -49,7 +50,18 @@ export default function HealthWellness({ data }) {
     );
   }
 
-  if (!data?.available) return null;
+  if (!data?.available) {
+    if (data?.reason) {
+      return (
+        <NotConfigured
+          label="Sleep & Wellness"
+          hint="Connect Oura to bring sleep, readiness, and HRV back."
+          reason={data.reason}
+        />
+      );
+    }
+    return null;
+  }
 
   const fmt1 = (n) => (n == null ? null : Number(n).toFixed(1));
   const fmt0 = (n) => (n == null ? null : Math.round(Number(n)));
