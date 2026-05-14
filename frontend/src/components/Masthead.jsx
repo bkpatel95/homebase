@@ -19,19 +19,19 @@ function formatDate(d = new Date()) {
 function weekdayMotto(d = new Date()) {
   const wd = d.getDay();
   return [
-    'The Quiet Edition',          // Sun
-    'Morning Briefing',           // Mon
-    'The Working Edition',        // Tue
-    'Midweek Dispatch',           // Wed
-    'The Thursday Review',        // Thu
-    'The Weekend Preview',        // Fri
-    'The Saturday Leisure',       // Sat
+    'The Quiet Edition', // Sun
+    'Morning Briefing', // Mon
+    'The Working Edition', // Tue
+    'Midweek Dispatch', // Wed
+    'The Thursday Review', // Thu
+    'The Weekend Preview', // Fri
+    'The Saturday Leisure', // Sat
   ][wd];
 }
 
 const MOOD_LABEL = {
   morning: 'Morning Edition',
-  midday:  'Midday Edition',
+  midday: 'Midday Edition',
   evening: 'Evening Edition',
 };
 

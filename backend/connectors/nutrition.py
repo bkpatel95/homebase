@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,8 +49,8 @@ def _parse_recipe(path: Path) -> dict[str, Any]:
     if mm:
         macros = {
             "protein": mm.group(1).strip(),
-            "carbs":   mm.group(2).strip(),
-            "fat":     mm.group(3).strip(),
+            "carbs": mm.group(2).strip(),
+            "fat": mm.group(3).strip(),
             "calories": mm.group(4).strip(),
         }
 
@@ -71,7 +71,10 @@ class NutritionConnector(Connector):
     widget_ids = ("nutrition",)
     config_schema = (
         ConfigField(
-            name="recipe_dir", label="Recipe directory", type="path", required=True,
+            name="recipe_dir",
+            label="Recipe directory",
+            type="path",
+            required=True,
             help="Container path with breakfast/, lunch/, dinner/ subdirectories of *.md files.",
             placeholder="/data/recipes",
             default="/data/recipes",
@@ -90,14 +93,16 @@ class NutritionConnector(Connector):
 
     async def collect(self, config: dict[str, Any]) -> dict[str, Any]:
         recipe_dir = Path(config.get("recipe_dir") or "")
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         if not recipe_dir.exists():
-            return {"nutrition": {
-                "available": False,
-                "reason": f"No recipe directory at {recipe_dir}.",
-                "meals": [],
-                "collected_at": now,
-            }}
+            return {
+                "nutrition": {
+                    "available": False,
+                    "reason": f"No recipe directory at {recipe_dir}.",
+                    "meals": [],
+                    "collected_at": now,
+                }
+            }
 
         meals: list[dict[str, Any]] = []
         for cat in CATEGORIES:
@@ -115,12 +120,14 @@ class NutritionConnector(Connector):
             if digits:
                 total_cal += int(digits.group(1))
 
-        return {"nutrition": {
-            "available": bool(meals),
-            "meals": meals,
-            "total_calories_est": total_cal or None,
-            "collected_at": now,
-        }}
+        return {
+            "nutrition": {
+                "available": bool(meals),
+                "meals": meals,
+                "total_calories_est": total_cal or None,
+                "collected_at": now,
+            }
+        }
 
 
 connector = NutritionConnector()

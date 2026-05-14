@@ -16,10 +16,16 @@ function Stat({ label, value, unit, pct }) {
         <div className="meta-sans uppercase tracking-wider">{label}</div>
         <div className="data-num text-xl">
           {value != null ? value : '—'}
-          {value != null && unit && <span className="text-sm font-normal text-inksoft ml-0.5">{unit}</span>}
+          {value != null && unit && (
+            <span className="text-sm font-normal text-inksoft ml-0.5">{unit}</span>
+          )}
         </div>
       </div>
-      {pct != null && <div className="mt-1.5"><Bar pct={pct} /></div>}
+      {pct != null && (
+        <div className="mt-1.5">
+          <Bar pct={pct} />
+        </div>
+      )}
     </div>
   );
 }
@@ -54,11 +60,11 @@ export default function SystemMetrics({ data }) {
       </header>
 
       <div className="divide-y rule-thin border-t rule-thin border-b">
-        <Stat label="CPU"        value={fmt(data.cpu_pct, 1)} unit="%" pct={data.cpu_pct} />
-        <Stat label="Memory"     value={fmt(data.mem_pct, 1)} unit="%" pct={data.mem_pct} />
-        <Stat label="Disk (/)"   value={fmt(data.disk_pct, 1)} unit="%" pct={data.disk_pct} />
-        <Stat label="Load avg"   value={fmt(data.load1, 2)} />
-        <Stat label="Uptime"     value={fmtUptime(data.uptime_seconds)} />
+        <Stat label="CPU" value={fmt(data.cpu_pct, 1)} unit="%" pct={data.cpu_pct} />
+        <Stat label="Memory" value={fmt(data.mem_pct, 1)} unit="%" pct={data.mem_pct} />
+        <Stat label="Disk (/)" value={fmt(data.disk_pct, 1)} unit="%" pct={data.disk_pct} />
+        <Stat label="Load avg" value={fmt(data.load1, 2)} />
+        <Stat label="Uptime" value={fmtUptime(data.uptime_seconds)} />
       </div>
 
       <p className="byline mt-3">

@@ -1,12 +1,13 @@
 import React from 'react';
 
 function Item({ label, value, suffix, status }) {
-  const dot = {
-    bad:  'dot-bad',
-    warn: 'dot-warn',
-    ok:   'dot-ok',
-    idle: '',
-  }[status] || '';
+  const dot =
+    {
+      bad: 'dot-bad',
+      warn: 'dot-warn',
+      ok: 'dot-ok',
+      idle: '',
+    }[status] || '';
   return (
     <div className="ticker-item flex items-center gap-2 px-4 py-2 min-w-max">
       {dot && <span className={`dot ${dot}`} aria-hidden="true" />}
@@ -25,7 +26,9 @@ export default function Ticker({ edition }) {
         {items.length === 0 && (
           <div className="px-4 py-2 meta-sans italic">Compiling the ticker…</div>
         )}
-        {items.map((it, i) => <Item key={`${it.label}-${i}`} {...it} />)}
+        {items.map((it, i) => (
+          <Item key={`${it.label}-${i}`} {...it} />
+        ))}
       </div>
     </div>
   );

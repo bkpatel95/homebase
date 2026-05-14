@@ -25,11 +25,13 @@ def _parse_links(blob: str | None) -> list[dict[str, str]]:
         parts = [p.strip() for p in line.split("|")]
         if len(parts) < 2 or not parts[0] or not parts[1]:
             continue
-        out.append({
-            "name": parts[0],
-            "href": parts[1],
-            "blurb": parts[2] if len(parts) > 2 else "",
-        })
+        out.append(
+            {
+                "name": parts[0],
+                "href": parts[1],
+                "blurb": parts[2] if len(parts) > 2 else "",
+            }
+        )
     return out
 
 
@@ -42,7 +44,9 @@ class QuickLinksConnector(Connector):
     widget_ids = ("quick_links",)
     config_schema = (
         ConfigField(
-            name="links", label="Links", type="textarea",
+            name="links",
+            label="Links",
+            type="textarea",
             help="One per line: Name | https://url | optional blurb",
             placeholder=DEFAULT_LINKS_BLOB,
             default=DEFAULT_LINKS_BLOB,

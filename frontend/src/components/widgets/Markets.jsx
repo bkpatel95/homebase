@@ -17,9 +17,7 @@ function Row({ t }) {
         <div className="headline text-[1.05rem]">{t.label}</div>
         <div className="meta-sans">{t.symbol}</div>
       </div>
-      <div className="data-num text-lg tabular text-right">
-        {fmtPrice(t.price, t.symbol)}
-      </div>
+      <div className="data-num text-lg tabular text-right">{fmtPrice(t.price, t.symbol)}</div>
       <div
         className={`data-num text-sm tabular text-right ${up ? 'text-[#2f6a3a]' : 'text-[#8a2a1f]'}`}
         style={{ minWidth: '4.5rem' }}
@@ -42,7 +40,9 @@ export default function Markets({ data }) {
       </header>
 
       <ul className="border-t rule-thin">
-        {tickers.map((t) => <Row key={t.symbol} t={t} />)}
+        {tickers.map((t) => (
+          <Row key={t.symbol} t={t} />
+        ))}
       </ul>
 
       <p className="byline mt-3">Indices via Stooq · crypto via CoinGecko · 24-hour windows.</p>

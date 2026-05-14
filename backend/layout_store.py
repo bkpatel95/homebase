@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,8 +20,15 @@ LAYOUT_PATH = Path(os.environ.get("LAYOUT_PATH", "/data/layout.json"))
 N_COLUMNS = 3
 
 ALL_WIDGETS = [
-    "health_wellness", "calendar", "markets", "media", "nutrition",
-    "infrastructure", "system_metrics", "prod_health", "quick_links",
+    "health_wellness",
+    "calendar",
+    "markets",
+    "media",
+    "nutrition",
+    "infrastructure",
+    "system_metrics",
+    "prod_health",
+    "quick_links",
 ]
 
 DEFAULT_TICKER_ITEMS = ["prod", "sleep", "markets", "meetings", "cpu"]
@@ -30,27 +37,45 @@ DEFAULT_TICKER_ITEMS = ["prod", "sleep", "markets", "meetings", "cpu"]
 # the next column-1 top, etc. — interleaved so columns balance out.
 MOOD_PRIORITY = {
     "morning": [
-        "health_wellness", "calendar", "nutrition",
-        "markets", "media", "system_metrics",
-        "infrastructure", "prod_health", "quick_links",
+        "health_wellness",
+        "calendar",
+        "nutrition",
+        "markets",
+        "media",
+        "system_metrics",
+        "infrastructure",
+        "prod_health",
+        "quick_links",
     ],
     "midday": [
-        "markets", "calendar", "health_wellness",
-        "media", "nutrition", "system_metrics",
-        "infrastructure", "prod_health", "quick_links",
+        "markets",
+        "calendar",
+        "health_wellness",
+        "media",
+        "nutrition",
+        "system_metrics",
+        "infrastructure",
+        "prod_health",
+        "quick_links",
     ],
     "evening": [
-        "health_wellness", "nutrition", "media",
-        "markets", "calendar", "system_metrics",
-        "infrastructure", "prod_health", "quick_links",
+        "health_wellness",
+        "nutrition",
+        "media",
+        "markets",
+        "calendar",
+        "system_metrics",
+        "infrastructure",
+        "prod_health",
+        "quick_links",
     ],
 }
 
 DEFAULT_STATE: dict[str, Any] = {
     "version": 2,
-    "priority": None,          # list[str] | None — None = use mood default
-    "hidden": [],              # list[str] — widgets explicitly hidden
-    "ticker_items": None,      # list[str] | None — None = use default
+    "priority": None,  # list[str] | None — None = use mood default
+    "hidden": [],  # list[str] — widgets explicitly hidden
+    "ticker_items": None,  # list[str] | None — None = use default
     "updated_at": None,
     "updated_by": None,
 }
@@ -87,7 +112,7 @@ def get_state() -> dict[str, Any]:
 
 def save_state(state: dict[str, Any], *, source: str = "api") -> dict[str, Any]:
     state = dict(state)
-    state["updated_at"] = datetime.now(timezone.utc).isoformat()
+    state["updated_at"] = datetime.now(UTC).isoformat()
     state["updated_by"] = source
     with _lock:
         _save_raw(state)

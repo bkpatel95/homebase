@@ -21,9 +21,7 @@ log = logging.getLogger("homebase.ws")
 router = APIRouter()
 
 ALLOWED_EMAILS = {
-    e.strip().lower()
-    for e in os.environ.get("ALLOWED_EMAILS", "bhavipatel141@gmail.com").split(",")
-    if e.strip()
+    e.strip().lower() for e in os.environ.get("ALLOWED_EMAILS", "bhavipatel141@gmail.com").split(",") if e.strip()
 }
 REQUIRE_AUTH = os.environ.get("REQUIRE_AUTH", "true").lower() in ("1", "true", "yes")
 

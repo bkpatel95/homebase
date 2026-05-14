@@ -28,9 +28,7 @@ from fastapi.responses import JSONResponse
 from .routers import chat, edition, layout, sources, ws
 
 ALLOWED_EMAILS = {
-    e.strip().lower()
-    for e in os.environ.get("ALLOWED_EMAILS", "bhavipatel141@gmail.com").split(",")
-    if e.strip()
+    e.strip().lower() for e in os.environ.get("ALLOWED_EMAILS", "bhavipatel141@gmail.com").split(",") if e.strip()
 }
 REQUIRE_AUTH = os.environ.get("REQUIRE_AUTH", "true").lower() in ("1", "true", "yes")
 
@@ -67,7 +65,7 @@ async def whoami(request: Request):
 
 
 app.include_router(edition.router, prefix="/api")
-app.include_router(layout.router,  prefix="/api")
+app.include_router(layout.router, prefix="/api")
 app.include_router(sources.router, prefix="/api")
-app.include_router(chat.router,    prefix="/api")
-app.include_router(ws.router,      prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(ws.router, prefix="/api")
