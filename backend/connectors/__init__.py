@@ -21,6 +21,7 @@ from __future__ import annotations
 import importlib
 import logging
 import pkgutil
+import time
 from typing import Any
 
 from .base import Connector, ConfigField
@@ -155,16 +156,28 @@ async def collect_all() -> dict[str, dict[str, Any]]:
 async def _safe_collect(c: Connector) -> dict[str, dict[str, Any]]:
     """Wrap collect() so a single connector raising doesn't sink the edition."""
     config = c.resolve(store.get_config(c.id))
+    start = time.perf_counter()
     try:
         result = await c.collect(config)
         # Record success only when the connector produced *something*; a connector
         # that returns `{widget: {available: False, reason: "no token"}}` isn't
         # really an error, but we still want a last_sync timestamp.
         store.record_sync(c.id, ok=True)
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
+        log.info(
+            "connector %s collect ok %.1fms",
+            c.id, duration_ms,
+            extra={"fields": {"connector": c.id, "ok": True, "duration_ms": duration_ms}},
+        )
         return result or {}
     except Exception as e:
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
         store.record_sync(c.id, ok=False, error=f"{type(e).__name__}: {e}")
-        log.exception("connector %s collect failed", c.id)
+        log.exception(
+            "connector %s collect failed (%.1fms)",
+            c.id, duration_ms,
+            extra={"fields": {"connector": c.id, "ok": False, "duration_ms": duration_ms}},
+        )
         # Surface the error on every widget the connector claims so the UI
         # doesn't silently render blanks.
         return {wid: {"error": f"{type(e).__name__}: {e}", "available": False}
