@@ -168,7 +168,8 @@ async def _safe_collect(c: Connector) -> dict[str, dict[str, Any]]:
         duration_ms = round((time.perf_counter() - start) * 1000, 1)
         log.info(
             "connector %s collect ok %.1fms",
-            c.id, duration_ms,
+            c.id,
+            duration_ms,
             extra={"fields": {"connector": c.id, "ok": True, "duration_ms": duration_ms}},
         )
         return result or {}
@@ -177,7 +178,8 @@ async def _safe_collect(c: Connector) -> dict[str, dict[str, Any]]:
         store.record_sync(c.id, ok=False, error=f"{type(e).__name__}: {e}")
         log.exception(
             "connector %s collect failed (%.1fms)",
-            c.id, duration_ms,
+            c.id,
+            duration_ms,
             extra={"fields": {"connector": c.id, "ok": False, "duration_ms": duration_ms}},
         )
         # Surface the error on every widget the connector claims so the UI

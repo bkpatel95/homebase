@@ -39,6 +39,7 @@ req_log = logging.getLogger("homebase.request")
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
 if SENTRY_DSN:
     import sentry_sdk
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         environment=os.environ.get("ENV", "production"),
@@ -47,10 +48,12 @@ if SENTRY_DSN:
     )
     log.info(
         "sentry initialized",
-        extra={"fields": {
-            "env": os.environ.get("ENV", "production"),
-            "release": os.environ.get("BUILD_VERSION") or None,
-        }},
+        extra={
+            "fields": {
+                "env": os.environ.get("ENV", "production"),
+                "release": os.environ.get("BUILD_VERSION") or None,
+            }
+        },
     )
 
 ALLOWED_EMAILS = {
@@ -90,13 +93,18 @@ async def request_logger(request: Request, call_next):
     duration_ms = (time.perf_counter() - start) * 1000
     req_log.info(
         "%s %s %d %.1fms",
-        request.method, request.url.path, response.status_code, duration_ms,
-        extra={"fields": {
-            "method": request.method,
-            "path": request.url.path,
-            "status": response.status_code,
-            "duration_ms": round(duration_ms, 1),
-        }},
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+        extra={
+            "fields": {
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": round(duration_ms, 1),
+            }
+        },
     )
     return response
 
