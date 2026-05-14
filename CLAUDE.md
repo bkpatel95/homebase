@@ -18,20 +18,46 @@ Prod only runs `origin/main`. There is no out-of-band deploy path. Do not
 `ssh` to prod and edit files under `~/homebase/` — the dirty-tree guard in
 `deploy.sh` will refuse to deploy on the next run.
 
+## Staging at homebase-test.lebcp.com
+
+Persistent test/staging instance running alongside prod on the Minisforum.
+Same Cloudflare tunnel, different ingress hostname, separate container.
+
+To preview any pushed branch:
+
+```
+ssh bp@100.91.251.82 'cd ~/homebase/deploy && ./deploy-test.sh <branch>'
+```
+
+Defaults to `sprint-1/test-combined` when no branch is given. The script
+auto-clones `~/homebase-test/` on first run, then rebuilds and recreates
+the `daily-bhavi-test` container on host port `8096`. Cloudflare Access
+on `homebase-test.lebcp.com` must be configured manually in the dashboard
+(separate Access app from `homebase.lebcp.com`).
+
+The test environment shares the read-only health-data/calendar/recipes
+mounts with prod, but uses its own writable volume at
+`/srv/containers/homebase-test/data` so layout edits don't leak.
+
 ## Where things live
 
 | Thing | Path |
 |---|---|
 | Repo on the Mac | `~/Documents/homebase/` (or wherever you cloned it) |
-| Repo on prod | `~/homebase/` on `bp@100.91.251.82` |
+| Repo on prod (main / prod source) | `~/homebase/` on `bp@100.91.251.82` |
+| Repo on prod (test source) | `~/homebase-test/` on `bp@100.91.251.82` |
 | App source | `backend/` (FastAPI) and `frontend/` (Vite/React) |
 | Dockerfile | repo root |
 | Compose + deploy script | `deploy/` |
 | Prod `.env` (gitignored, chmod 600) | `~/homebase/deploy/.env` |
-| Container data volume | `/srv/containers/homebase/` on prod |
+| Test `.env.test` (gitignored, chmod 600) | `~/homebase/deploy/.env.test` |
+| Container data volume (prod) | `/srv/containers/homebase/` on prod |
+| Container data volume (test) | `/srv/containers/homebase-test/` on prod |
 | Service worker | `frontend/public/sw.js` |
-| Host port | `8095` (cloudflared maps homebase.lebcp.com → :8095) |
-| Image tag | `localhost/homebase:local` |
+| Host port (prod) | `8095` (cloudflared maps homebase.lebcp.com → :8095) |
+| Host port (test) | `8096` (cloudflared maps homebase-test.lebcp.com → :8096) |
+| Image tag (prod) | `localhost/homebase:local` |
+| Image tag (test) | `localhost/homebase:test` |
 
 ## Build-version / service-worker mechanism
 
@@ -56,8 +82,10 @@ service up on a box that doesn't run the podman-server stack,
 network or create a stand-in).
 
 Cloudflared on prod also lives in `podman-server` — adding/changing the
-ingress hostname for `homebase.lebcp.com` is done in
-`prod/cloudflared/config.yml` there, not here.
+ingress hostname for `homebase.lebcp.com` (or `homebase-test.lebcp.com`)
+is done in `prod/cloudflared/config.yml` there, not here. The live config
+on prod has drifted from that template; the source of truth is the file
+at `/srv/containers/cloudflared/config.yml` on the Minisforum.
 
 ## Adding a widget / connector
 

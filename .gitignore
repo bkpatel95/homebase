@@ -15,6 +15,7 @@ build/
 .env.local
 *.secret
 deploy/.env
+deploy/.env.test
 
 # Editor / OS
 .DS_Store
