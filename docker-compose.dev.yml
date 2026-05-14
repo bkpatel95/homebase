@@ -28,9 +28,11 @@ services:
       - .env
     environment:
       # Force REQUIRE_AUTH off in dev — there's no Cloudflare Access in front
-      # of localhost. The .env file can override if you need to test the auth
-      # path with a fake header.
-      REQUIRE_AUTH: ${REQUIRE_AUTH:-false}
+      # of localhost, and a .env copied from .env.example (which sets
+      # REQUIRE_AUTH=true for the prod-shaped default) would otherwise leak
+      # through ${REQUIRE_AUTH:-...} substitution and 403 every request.
+      # If you need to test the auth path locally, override here.
+      REQUIRE_AUTH: "false"
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-dev@localhost}
       TZ: ${TZ:-America/New_York}
       # File-backed connectors all read from /data — point them at the mock
@@ -92,10 +94,10 @@ services:
       POSTGRES_DB: homebase_chat
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      # Exposed on a non-standard port so it doesn't clash with a host
-      # postgres if you happen to run one.
-      - "5433:5432"
+    # No host port binding — the backend reaches postgres via the compose
+    # network (postgres:5432) and current code doesn't use it anyway
+    # (reserved for Phase 4 chat-history persistence). Skipping the publish
+    # avoids collisions with whatever the host already runs on 5432/5433.
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "homebase", "-d", "homebase_chat"]
       interval: 5s

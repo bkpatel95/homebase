@@ -79,7 +79,7 @@ async def chat(req: ChatRequest, request: Request):
         return JSONResponse(
             {
                 "error": "chat_unavailable",
-                "detail": "ANTHROPIC_API_KEY is not configured on the server. Add it to prod/homebase/.env and restart the daily-bhavi container.",
+                "detail": "ANTHROPIC_API_KEY is not configured. Add it to .env (dev) or deploy/.env (prod) and restart the backend.",
             },
             status_code=503,
         )

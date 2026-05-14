@@ -37,6 +37,15 @@ OPTIONAL_INTEGRATIONS: list[tuple[str, str]] = [
 ]
 
 
+def _is_dev_mode() -> bool:
+    # Only ENV=production is treated as strict. Everything else (development,
+    # dev, test, unset) is dev-permissive: missing REQUIRED vars log a
+    # warning instead of crashing app startup. Prod's deploy/compose.yml
+    # pins ENV=production, so prod behavior is unchanged.
+    env = (os.environ.get("ENV") or os.environ.get("HOMEBASE_ENV") or "").strip().lower()
+    return env != "production"
+
+
 def validate_env() -> None:
     missing = [(name, desc, hint) for name, desc, hint in REQUIRED if not os.environ.get(name, "").strip()]
 
@@ -47,7 +56,12 @@ def validate_env() -> None:
             lines.append(f"    where to get it: {hint}")
         lines.append("")
         lines.append("Set them in .env (see .env.example) and restart.")
-        raise RuntimeError("\n".join(lines))
+        message = "\n".join(lines)
+
+        if _is_dev_mode():
+            log.warning("%s\n(dev mode: continuing — affected features will return 503)", message)
+        else:
+            raise RuntimeError(message)
 
     for name, consequence in OPTIONAL_INTEGRATIONS:
         if not os.environ.get(name, "").strip():
