@@ -50,8 +50,6 @@ export default function ProdHealth({ data }) {
         <span className="data-num text-xl">{status}</span>
       </div>
 
-      <p className="byline">Audit filed {timeAgo(data.timestamp)}</p>
-
       {issues.length > 0 && (
         <ul className="mt-3 list-disc pl-5 body-serif text-[14px] space-y-1">
           {issues.slice(0, 8).map((it, i) => (
@@ -63,14 +61,4 @@ export default function ProdHealth({ data }) {
       {data.summary && <p className="body-serif text-[14px] mt-3 italic">{data.summary}</p>}
     </section>
   );
-}
-
-function timeAgo(iso) {
-  if (!iso) return 'at an unknown hour';
-  const diff = (Date.now() - Date.parse(iso)) / 1000;
-  if (Number.isNaN(diff)) return 'recently';
-  if (diff < 60) return 'moments ago';
-  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
 }

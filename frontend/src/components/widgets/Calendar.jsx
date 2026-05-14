@@ -1,6 +1,7 @@
 import React from 'react';
 import StalenessBadge from '../StalenessBadge.jsx';
 import EmptyState from '../EmptyState.jsx';
+import NotConfigured from '../NotConfigured.jsx';
 
 const ACCENTS = ['#8a2a1f', '#3b5d4a', '#6b4a8a', '#a36a1f', '#1f4a6a'];
 
@@ -43,7 +44,20 @@ export default function Calendar({ data }) {
     );
   }
 
-  if (!data?.available) return null;
+  if (!data?.available) {
+    // `reason` is set by the connector when the feed file is missing; an
+    // available:false response *without* a reason just means "no events today".
+    if (data?.reason) {
+      return (
+        <NotConfigured
+          label="Calendar"
+          hint="Point CALENDAR_EVENTS at a today.json feed to show today's meetings."
+          reason={data.reason}
+        />
+      );
+    }
+    return null;
+  }
   const events = data.events || [];
   if (events.length === 0) return null;
 

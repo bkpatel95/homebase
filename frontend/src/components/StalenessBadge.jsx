@@ -26,12 +26,15 @@ function formatAge(ts) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// Subtle staleness indicator for a widget header.
-// - fresh (< 5 min): tiny green dot, no label
-// - stale (5–30 min): amber dot, no label
-// - very stale (> 30 min): red dot with "Last updated X min ago"
-// - unknown timestamp: nothing
-export default function StalenessBadge({ timestamp, label = 'Last updated' }) {
+// Subtle staleness indicator for a widget header. Every widget that fetches
+// data uses this same component so the freshness signal is consistent across
+// the broadsheet.
+//
+// - fresh (< 5 min):     green dot + "X min ago" / "moments ago"
+// - stale (5–30 min):    amber dot + "X min ago"
+// - very stale (> 30 min): red dot + "X min ago"
+// - unknown timestamp:   nothing
+export default function StalenessBadge({ timestamp, label = 'updated' }) {
   const [, force] = useState(0);
 
   // Re-render once a minute so the dot can transition between tiers and the
@@ -46,37 +49,23 @@ export default function StalenessBadge({ timestamp, label = 'Last updated' }) {
   if (level === 'unknown') return null;
 
   const age = formatAge(timestamp);
-  const title = `${label} ${age}`;
+  const toneClass =
+    level === 'fresh' ? 'dot-ok' : level === 'stale' ? 'dot-warn' : 'dot-bad';
+  const aria =
+    level === 'fresh'
+      ? `Data is fresh — ${label} ${age}`
+      : level === 'stale'
+        ? `Data is stale — ${label} ${age}`
+        : `Data is very stale — ${label} ${age}`;
 
-  if (level === 'fresh') {
-    return (
-      <span
-        className="dot dot-ok inline-block align-middle"
-        title={title}
-        aria-label={`Data is fresh — ${title}`}
-      />
-    );
-  }
-
-  if (level === 'stale') {
-    return (
-      <span
-        className="dot dot-warn inline-block align-middle"
-        title={title}
-        aria-label={`Data is stale — ${title}`}
-      />
-    );
-  }
-
-  // very stale
   return (
     <span
       className="inline-flex items-center gap-1 align-middle meta-sans"
-      title={title}
-      aria-label={`Data is very stale — ${title}`}
+      title={`${label} ${age}`}
+      aria-label={aria}
     >
-      <span className="dot dot-bad" />
-      <span className="text-[10px]">
+      <span className={`dot ${toneClass}`} />
+      <span className="text-[10px] tabular">
         {label} {age}
       </span>
     </span>
