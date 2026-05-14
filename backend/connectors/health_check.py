@@ -18,7 +18,10 @@ class HealthCheckConnector(Connector):
     widget_ids = ("prod_health",)
     config_schema = (
         ConfigField(
-            name="path", label="Health JSON path", type="path", required=True,
+            name="path",
+            label="Health JSON path",
+            type="path",
+            required=True,
             help="Filesystem path inside the container where the health audit is mounted.",
             placeholder="/data/health-data/prod-health.json",
             default="/data/health-data/prod-health.json",
@@ -73,12 +76,14 @@ class HealthCheckConnector(Connector):
         if total is not None and expected is not None:
             summary = f"{total} containers running (expected {expected})."
 
-        return {"prod_health": {
-            "timestamp": raw.get("timestamp"),
-            "issues": issues,
-            "summary": summary,
-            "source": str(path),
-        }}
+        return {
+            "prod_health": {
+                "timestamp": raw.get("timestamp"),
+                "issues": issues,
+                "summary": summary,
+                "source": str(path),
+            }
+        }
 
 
 connector = HealthCheckConnector()

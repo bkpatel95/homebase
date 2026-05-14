@@ -146,7 +146,10 @@ async def _execute_update_layout(args: dict[str, Any]) -> dict[str, Any]:
         new_state = dict(layout_store.DEFAULT_STATE)
         layout_store.save_state(new_state, source="chat:update_layout")
         await ws_manager.broadcast({"type": "edition_dirty", "reason": "layout_reset"})
-        return {"ok": True, "summary": "Layout reset to defaults — the newspaper now follows the time-of-day arrangement."}
+        return {
+            "ok": True,
+            "summary": "Layout reset to defaults — the newspaper now follows the time-of-day arrangement.",
+        }
 
     if not widget:
         return {"ok": False, "error": "widget is required for move/hide/show"}
@@ -193,7 +196,7 @@ async def _execute_query_data(args: dict[str, Any]) -> dict[str, Any]:
     # Back-compat aliases: earlier the enum was {health, markets, infra, ...}.
     aliases = {
         "health": "health_wellness",
-        "infra":  "infrastructure",
+        "infra": "infrastructure",
         "system": "system_metrics",
     }
     source = aliases.get(args.get("source"), args.get("source"))
@@ -214,10 +217,12 @@ async def _execute_query_data(args: dict[str, Any]) -> dict[str, Any]:
             "containers": data.get("containers", [])[:25],
         }
     if source == "markets":
-        data = {"tickers": [
-            {k: t.get(k) for k in ("label", "symbol", "price", "prev_close", "pct_change") if t.get(k) is not None}
-            for t in data.get("tickers", [])
-        ]}
+        data = {
+            "tickers": [
+                {k: t.get(k) for k in ("label", "symbol", "price", "prev_close", "pct_change") if t.get(k) is not None}
+                for t in data.get("tickers", [])
+            ]
+        }
 
     return {"ok": True, "data": data, "detail_hint": detail}
 
@@ -240,17 +245,20 @@ async def _execute_manage_sources(args: dict[str, Any]) -> dict[str, Any]:
     if action == "list":
         snapshot = connectors.describe_all()
         # Trim secrets/schema before handing back to Claude.
-        rows = [{
-            "id": s["id"],
-            "name": s["name"],
-            "description": s["description"],
-            "status": s["status"],
-            "configured": s["configured"],
-            "widgets": s["widget_ids"],
-            "missing_required": s["missing_required"],
-            "last_sync": s["last_sync"],
-            "last_error": s["last_error"],
-        } for s in snapshot]
+        rows = [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "description": s["description"],
+                "status": s["status"],
+                "configured": s["configured"],
+                "widgets": s["widget_ids"],
+                "missing_required": s["missing_required"],
+                "last_sync": s["last_sync"],
+                "last_error": s["last_error"],
+            }
+            for s in snapshot
+        ]
         return {"ok": True, "summary": f"{len(rows)} connectors registered.", "sources": rows}
 
     if not cid:
@@ -272,20 +280,17 @@ async def _execute_manage_sources(args: dict[str, Any]) -> dict[str, Any]:
             await ws_manager.broadcast({"type": "edition_dirty", "reason": "sources", "connector_id": cid})
         return {
             "ok": True,
-            "summary": (
-                f"Cleared stored config for {cid}." if removed
-                else f"{cid} had no stored config to remove."
-            ),
+            "summary": (f"Cleared stored config for {cid}." if removed else f"{cid} had no stored config to remove."),
         }
 
     return {"ok": False, "error": f"unknown action '{action}'"}
 
 
 _EXECUTORS = {
-    "update_layout":   _execute_update_layout,
-    "query_data":      _execute_query_data,
-    "update_ticker":   _execute_update_ticker,
-    "manage_sources":  _execute_manage_sources,
+    "update_layout": _execute_update_layout,
+    "query_data": _execute_query_data,
+    "update_ticker": _execute_update_ticker,
+    "manage_sources": _execute_manage_sources,
 }
 
 
@@ -302,12 +307,12 @@ async def execute(tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
 def pretty(widget_id: str) -> str:
     return {
         "health_wellness": "Health & Wellness",
-        "calendar":        "Calendar",
-        "markets":         "Markets",
-        "media":           "Media",
-        "nutrition":       "Nutrition",
-        "infrastructure":  "Infrastructure",
-        "system_metrics":  "System Metrics",
-        "prod_health":     "Prod Health",
-        "quick_links":     "Quick Links",
+        "calendar": "Calendar",
+        "markets": "Markets",
+        "media": "Media",
+        "nutrition": "Nutrition",
+        "infrastructure": "Infrastructure",
+        "system_metrics": "System Metrics",
+        "prod_health": "Prod Health",
+        "quick_links": "Quick Links",
     }.get(widget_id, widget_id.replace("_", " ").title())

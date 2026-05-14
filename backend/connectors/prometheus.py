@@ -6,7 +6,8 @@ and a single test/configure surface.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import contextlib
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -41,15 +42,21 @@ class PrometheusConnector(Connector):
     widget_ids = ("infrastructure", "system_metrics")
     config_schema = (
         ConfigField(
-            name="url", label="Prometheus URL", type="url", required=True,
+            name="url",
+            label="Prometheus URL",
+            type="url",
+            required=True,
             help="Base URL of the Prometheus query API.",
             placeholder="http://prometheus:9090",
             default="http://host.containers.internal:9090",
             env_fallback="PROMETHEUS_URL",
         ),
         ConfigField(
-            name="timeout", label="HTTP timeout (seconds)", type="number",
-            default="4.0", env_fallback="PROMETHEUS_TIMEOUT",
+            name="timeout",
+            label="HTTP timeout (seconds)",
+            type="number",
+            default="4.0",
+            env_fallback="PROMETHEUS_TIMEOUT",
         ),
     )
 
@@ -80,23 +87,41 @@ class PrometheusConnector(Connector):
         return {"infrastructure": infra, "system_metrics": sysm}
 
     async def _infra(self, url: str, timeout: float) -> dict[str, Any]:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         if not url:
-            return {"error": "prometheus url not set", "containers": [],
-                    "containers_up": 0, "containers_total": 0,
-                    "containers_down": 0, "collected_at": now}
+            return {
+                "error": "prometheus url not set",
+                "containers": [],
+                "containers_up": 0,
+                "containers_total": 0,
+                "containers_down": 0,
+                "collected_at": now,
+            }
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 info = await _query(client, url, "podman_container_info")
                 states = await _query(client, url, "podman_container_state")
                 health = await _query(client, url, "podman_container_health")
         except Exception as e:
-            return {"error": f"prometheus unreachable: {e}", "containers": [],
-                    "containers_up": 0, "containers_total": 0,
-                    "containers_down": 0, "collected_at": now}
+            return {
+                "error": f"prometheus unreachable: {e}",
+                "containers": [],
+                "containers_up": 0,
+                "containers_total": 0,
+                "containers_down": 0,
+                "collected_at": now,
+            }
 
-        state_name = {0: "unknown", 1: "created", 2: "running", 3: "stopped",
-                      4: "exited", 5: "paused", 6: "removing", 7: "error"}
+        state_name = {
+            0: "unknown",
+            1: "created",
+            2: "running",
+            3: "stopped",
+            4: "exited",
+            5: "paused",
+            6: "removing",
+            7: "error",
+        }
         health_name = {0: "none", 1: "healthy", 2: "unhealthy", 3: "starting"}
 
         id_to_name: dict[str, str] = {}
@@ -109,28 +134,26 @@ class PrometheusConnector(Connector):
         state_by_id: dict[str, int] = {}
         for r in states:
             cid = r["metric"].get("id")
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 state_by_id[cid] = int(float(r["value"][1]))
-            except (ValueError, TypeError):
-                pass
 
         health_by_id: dict[str, int] = {}
         for r in health:
             cid = r["metric"].get("id")
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 health_by_id[cid] = int(float(r["value"][1]))
-            except (ValueError, TypeError):
-                pass
 
         containers: list[dict[str, Any]] = []
         for cid, name in id_to_name.items():
             code = state_by_id.get(cid, 0)
-            containers.append({
-                "name": name,
-                "state": state_name.get(code, "unknown"),
-                "health": health_name.get(health_by_id.get(cid, 0), "none"),
-                "restarts": 0,
-            })
+            containers.append(
+                {
+                    "name": name,
+                    "state": state_name.get(code, "unknown"),
+                    "health": health_name.get(health_by_id.get(cid, 0), "none"),
+                    "restarts": 0,
+                }
+            )
         containers.sort(key=lambda c: (c["state"] != "running", c["name"]))
 
         up = sum(1 for c in containers if c["state"] == "running")
@@ -147,24 +170,33 @@ class PrometheusConnector(Connector):
         }
 
     async def _system(self, url: str, timeout: float) -> dict[str, Any]:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         if not url:
             return {"error": "prometheus url not set", "collected_at": now}
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
-                cpu = _scalar(await _query(
-                    client, url,
-                    '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)',
-                ))
-                mem = _scalar(await _query(
-                    client, url,
-                    '(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100',
-                ))
-                disk = _scalar(await _query(
-                    client, url,
-                    '(1 - (node_filesystem_avail_bytes{mountpoint="/"} '
-                    '/ node_filesystem_size_bytes{mountpoint="/"})) * 100',
-                ))
+                cpu = _scalar(
+                    await _query(
+                        client,
+                        url,
+                        '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)',
+                    )
+                )
+                mem = _scalar(
+                    await _query(
+                        client,
+                        url,
+                        "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+                    )
+                )
+                disk = _scalar(
+                    await _query(
+                        client,
+                        url,
+                        '(1 - (node_filesystem_avail_bytes{mountpoint="/"} '
+                        '/ node_filesystem_size_bytes{mountpoint="/"})) * 100',
+                    )
+                )
                 load1 = _scalar(await _query(client, url, "node_load1"))
                 uptime = _scalar(await _query(client, url, "time() - node_boot_time_seconds"))
         except Exception as e:

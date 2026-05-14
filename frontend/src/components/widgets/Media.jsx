@@ -32,7 +32,12 @@ export default function Media({ data }) {
                   <span className="body-serif text-[14px] truncate">{m.title}</span>
                   <span className="meta-sans whitespace-nowrap">{timeAgo(m.added_at)}</span>
                 </div>
-                {m.library && <div className="meta-sans">{m.library}{m.year ? ` · ${m.year}` : ''}</div>}
+                {m.library && (
+                  <div className="meta-sans">
+                    {m.library}
+                    {m.year ? ` · ${m.year}` : ''}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -53,9 +58,7 @@ export default function Media({ data }) {
         </>
       )}
 
-      <p className="byline mt-3">
-        Plex library{pending.length ? ' · Overseerr queue' : ''}.
-      </p>
+      <p className="byline mt-3">Plex library{pending.length ? ' · Overseerr queue' : ''}.</p>
     </section>
   );
 }

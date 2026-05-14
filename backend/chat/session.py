@@ -12,7 +12,7 @@ from threading import Lock
 from typing import Any
 
 SESSION_TTL = 60 * 60  # 1 hour idle
-MAX_MESSAGES = 40       # cap per session to keep prompts cheap
+MAX_MESSAGES = 40  # cap per session to keep prompts cheap
 
 
 class SessionStore:

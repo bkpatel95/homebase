@@ -21,8 +21,8 @@ override any value at runtime through the Sources panel.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable
+from dataclasses import dataclass
+from typing import Any
 
 # Field types the frontend understands. Anything else falls back to "string".
 FIELD_TYPES = ("string", "password", "url", "path", "number", "textarea")
@@ -30,14 +30,14 @@ FIELD_TYPES = ("string", "password", "url", "path", "number", "textarea")
 
 @dataclass(frozen=True)
 class ConfigField:
-    name: str                          # key in the stored config dict
-    label: str                         # human label in the UI
+    name: str  # key in the stored config dict
+    label: str  # human label in the UI
     type: str = "string"
     required: bool = False
     help: str = ""
     placeholder: str = ""
     default: str | None = None
-    env_fallback: str | None = None    # env var to read if no stored value
+    env_fallback: str | None = None  # env var to read if no stored value
 
 
 class Connector:
@@ -45,12 +45,12 @@ class Connector:
     `connector = MyConnector()` so the registry can pick it up.
     """
 
-    id: str = ""                       # stable identifier (file-system-safe)
-    name: str = ""                     # display name
-    description: str = ""              # one-line blurb shown on the card
-    icon: str = "●"                    # emoji or single character
-    category: str = "data"             # "infra" | "data" | "personal" | "media"
-    widget_ids: tuple[str, ...] = ()   # widgets this connector populates
+    id: str = ""  # stable identifier (file-system-safe)
+    name: str = ""  # display name
+    description: str = ""  # one-line blurb shown on the card
+    icon: str = "●"  # emoji or single character
+    category: str = "data"  # "infra" | "data" | "personal" | "media"
+    widget_ids: tuple[str, ...] = ()  # widgets this connector populates
     config_schema: tuple[ConfigField, ...] = ()
 
     # ─── helpers ──────────────────────────────────────────────────────────
@@ -69,10 +69,7 @@ class Connector:
         return out
 
     def missing_required(self, resolved: dict[str, Any]) -> list[str]:
-        return [
-            f.name for f in self.config_schema
-            if f.required and not str(resolved.get(f.name) or "").strip()
-        ]
+        return [f.name for f in self.config_schema if f.required and not str(resolved.get(f.name) or "").strip()]
 
     def is_configured(self, stored: dict[str, Any] | None) -> bool:
         """True when all required fields have a value somewhere in the chain."""

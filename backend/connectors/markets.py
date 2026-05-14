@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -11,9 +11,9 @@ import httpx
 from .base import ConfigField, Connector
 
 STOOQ_INDEXES = [
-    {"id": "sp500",  "symbol": "^SPX",  "label": "S&P 500"},
-    {"id": "nasdaq", "symbol": "^NDQ",  "label": "NASDAQ"},
-    {"id": "dow",    "symbol": "^DJI",  "label": "Dow Jones"},
+    {"id": "sp500", "symbol": "^SPX", "label": "S&P 500"},
+    {"id": "nasdaq", "symbol": "^NDQ", "label": "NASDAQ"},
+    {"id": "dow", "symbol": "^DJI", "label": "Dow Jones"},
 ]
 
 COINGECKO_COINS = [
@@ -99,14 +99,18 @@ class MarketsConnector(Connector):
     widget_ids = ("markets",)
     config_schema = (
         ConfigField(
-            name="extra_tickers", label="Extra tickers",
+            name="extra_tickers",
+            label="Extra tickers",
             help="Comma-separated Stooq symbols (e.g. ^FTSE,^VIX). Optional.",
             placeholder="^FTSE,^VIX",
             env_fallback="MARKETS_EXTRA",
         ),
         ConfigField(
-            name="timeout", label="HTTP timeout (seconds)", type="number",
-            default="5.0", env_fallback="MARKETS_TIMEOUT",
+            name="timeout",
+            label="HTTP timeout (seconds)",
+            type="number",
+            default="5.0",
+            env_fallback="MARKETS_TIMEOUT",
         ),
     )
 
@@ -138,20 +142,22 @@ class MarketsConnector(Connector):
             crypto_map = await crypto_task
 
         out: list[dict[str, Any]] = []
-        for spec, snap in zip(tickers + extra_specs, index_results):
+        for spec, snap in zip(tickers + extra_specs, index_results, strict=False):
             out.append({**spec, **snap})
         for spec in COINGECKO_COINS:
             snap = crypto_map.get(spec["coingecko_id"], {})
             out.append({"id": spec["id"], "symbol": spec["symbol"], "label": spec["label"], **snap})
 
         primary = next((t for t in out if t["id"] == "sp500" and "price" in t), None)
-        return {"markets": {
-            "available": any("price" in t for t in out),
-            "tickers": out,
-            "headline_symbol": "sp500",
-            "headline_pct": primary["pct_change"] if primary else None,
-            "collected_at": datetime.now(timezone.utc).isoformat(),
-        }}
+        return {
+            "markets": {
+                "available": any("price" in t for t in out),
+                "tickers": out,
+                "headline_symbol": "sp500",
+                "headline_pct": primary["pct_change"] if primary else None,
+                "collected_at": datetime.now(UTC).isoformat(),
+            }
+        }
 
 
 def _to_float(v: Any, default: float) -> float:

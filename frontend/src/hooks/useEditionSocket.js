@@ -22,12 +22,16 @@ export function useEditionSocket({ onDirty }) {
       const ws = new WebSocket(url);
       state.ws = ws;
 
-      ws.addEventListener('open', () => { state.retry = 0; });
+      ws.addEventListener('open', () => {
+        state.retry = 0;
+      });
       ws.addEventListener('message', (e) => {
         try {
           const msg = JSON.parse(e.data);
           if (msg.type === 'edition_dirty') onDirty?.(msg);
-        } catch { /* ignore non-JSON */ }
+        } catch {
+          /* ignore non-JSON */
+        }
       });
       ws.addEventListener('close', () => {
         if (state.closed) return;
@@ -35,14 +39,22 @@ export function useEditionSocket({ onDirty }) {
         setTimeout(connect, wait);
       });
       ws.addEventListener('error', () => {
-        try { ws.close(); } catch { /* noop */ }
+        try {
+          ws.close();
+        } catch {
+          /* noop */
+        }
       });
     }
 
     connect();
     return () => {
       state.closed = true;
-      try { state.ws?.close(); } catch { /* noop */ }
+      try {
+        state.ws?.close();
+      } catch {
+        /* noop */
+      }
     };
   }, [onDirty]);
 }
