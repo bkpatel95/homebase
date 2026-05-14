@@ -1,0 +1,14 @@
+# Frontend dev image — installs npm deps once at build time and runs the
+# Vite dev server. Source is mounted via docker-compose; node_modules lives
+# on a named volume so the host mount doesn't shadow the installed packages.
+
+FROM docker.io/library/node:20-alpine
+
+WORKDIR /app
+
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm install --no-audit --no-fund
+
+EXPOSE 3000
+
+CMD ["npx", "vite", "--host", "0.0.0.0", "--port", "3000"]

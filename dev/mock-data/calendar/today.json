@@ -1,0 +1,23 @@
+{
+  "fetched_at": "2026-05-13T07:00:00-04:00",
+  "_note": "Static example. Run `make dev-seed` to rewrite with today's date so the calendar widget actually shows these events.",
+  "events": [
+    {
+      "title": "Standup",
+      "start": "2026-05-13T09:30:00-04:00",
+      "end":   "2026-05-13T09:45:00-04:00",
+      "location": "Zoom"
+    },
+    {
+      "title": "Design review — homebase dev env",
+      "start": "2026-05-13T11:00:00-04:00",
+      "end":   "2026-05-13T12:00:00-04:00",
+      "location": "Office"
+    },
+    {
+      "title": "1:1 with manager",
+      "start": "2026-05-13T15:00:00-04:00",
+      "end":   "2026-05-13T15:30:00-04:00"
+    }
+  ]
+}

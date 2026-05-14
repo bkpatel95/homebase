@@ -28,3 +28,7 @@ deploy/.env
 # Local backups
 *.bak
 *.bak.*
+
+# Runtime-mutated dev mock data (the app writes layout/sources JSON into /data)
+dev/mock-data/layout.json
+dev/mock-data/sources.json

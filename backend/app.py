@@ -27,12 +27,19 @@ import time
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .config import validate_env
 from .logging_config import configure_logging
 from .routers import chat, edition, layout, sources, ws
 
 configure_logging()
 log = logging.getLogger("homebase.app")
 req_log = logging.getLogger("homebase.request")
+
+# Fail fast at import time if required env vars are missing. Uvicorn surfaces
+# the RuntimeError and refuses to bind the port — easier to debug than a
+# late 503 from /api/chat. Optional integrations log a warning (which the
+# logger above is now configured to render).
+validate_env()
 
 # Optional Sentry. The app works fine without it — the SDK is only imported
 # and initialized when SENTRY_DSN is set.

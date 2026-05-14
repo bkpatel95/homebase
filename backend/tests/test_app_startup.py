@@ -1,10 +1,10 @@
-"""App startup — make sure the app boots without optional env vars and that
-the auth middleware reads its config from env at import time correctly.
+"""App startup — exercise the env-validation contract and the auth-middleware
+config that's read at import time.
 
-There are no required env vars to *boot* the app — every connector tolerates
-missing config. ANTHROPIC_API_KEY is required to actually send a chat, and
-that's surfaced at request time (HTTP 503), not at startup. This test pins
-that contract so we don't accidentally start requiring an env var to boot.
+`backend.config.validate_env()` runs at module import (see
+`backend/app.py`). It requires ANTHROPIC_API_KEY (RuntimeError if absent)
+and warns about missing OURA_TOKEN / PLEX_TOKEN / OVERSEERR_API_KEY without
+blocking startup. These tests pin that contract.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib
 import os
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -28,25 +29,26 @@ def _reload_app(monkeypatch, **env):
     return importlib.reload(app_module)
 
 
-def test_app_boots_without_anthropic_key(monkeypatch):
-    """No ANTHROPIC_API_KEY: app still imports and /api/health responds."""
-    app_module = _reload_app(
-        monkeypatch,
-        ANTHROPIC_API_KEY=None,
-        REQUIRE_AUTH="false",
-        SOURCES_PATH="/tmp/homebase-tests-startup-sources.json",
-    )
-    client = TestClient(app_module.app)
-    r = client.get("/api/health")
-    assert r.status_code == 200
+def test_validate_env_refuses_without_anthropic_key(monkeypatch):
+    """validate_env() raises a RuntimeError that names the missing var so
+    operators see a clear error on a fresh deploy instead of a late 503.
+    The backend.app module calls validate_env() at import — we invoke it
+    directly here to avoid leaving the module in a half-imported state."""
+    from backend.config import validate_env
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        validate_env()
 
 
 def test_app_boots_without_optional_connector_env(monkeypatch):
-    """No connector creds: app still imports and /api/sources responds."""
-    for k in ("OURA_TOKEN", "PLEX_TOKEN", "OVERSEERR_API_KEY", "PROMETHEUS_URL", "ANTHROPIC_API_KEY"):
+    """No connector creds (but ANTHROPIC_API_KEY present): app imports and
+    /api/sources responds. Optional integrations only log warnings."""
+    for k in ("OURA_TOKEN", "PLEX_TOKEN", "OVERSEERR_API_KEY", "PROMETHEUS_URL"):
         monkeypatch.delenv(k, raising=False)
     app_module = _reload_app(
         monkeypatch,
+        ANTHROPIC_API_KEY="sk-test-placeholder",
         REQUIRE_AUTH="false",
         SOURCES_PATH="/tmp/homebase-tests-startup-sources.json",
     )
@@ -77,19 +79,6 @@ def test_require_auth_recognises_truthy_strings(monkeypatch):
     for val in ("0", "false", "no", ""):
         app_module = _reload_app(monkeypatch, REQUIRE_AUTH=val)
         assert app_module.REQUIRE_AUTH is False, f"REQUIRE_AUTH={val!r} should be False"
-
-
-def test_chat_endpoint_returns_503_when_api_key_missing(monkeypatch):
-    """The /api/chat endpoint surfaces a clear error rather than 500 when
-    ANTHROPIC_API_KEY is missing — important for a fresh prod box."""
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    app_module = _reload_app(monkeypatch, REQUIRE_AUTH="false")
-    client = TestClient(app_module.app)
-    r = client.post("/api/chat", json={"session_id": "xxxx-test", "message": "hello"})
-    assert r.status_code == 503
-    body = r.json()
-    assert body["error"] == "chat_unavailable"
-    assert "ANTHROPIC_API_KEY" in body["detail"]
 
 
 def test_app_has_expected_routes():

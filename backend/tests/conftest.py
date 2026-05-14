@@ -21,6 +21,12 @@ _DEFAULT_TMP_SOURCES = Path("/tmp/homebase-tests-default-sources.json")
 os.environ.setdefault("SOURCES_PATH", str(_DEFAULT_TMP_SOURCES))
 os.environ.setdefault("REQUIRE_AUTH", "false")
 os.environ.setdefault("ALLOWED_EMAILS", "test@example.com")
+# backend.config.validate_env() requires this at import time. Tests don't
+# actually call Anthropic — a placeholder satisfies the presence check.
+# Use plain assignment (not setdefault) because the dev shell may export
+# the var as empty, which setdefault would treat as already-set.
+if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+    os.environ["ANTHROPIC_API_KEY"] = "sk-test-placeholder"
 
 # Make the repo root importable so `from backend.app import app` works
 # regardless of where pytest was invoked from.
