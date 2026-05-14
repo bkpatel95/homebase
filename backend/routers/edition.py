@@ -18,7 +18,21 @@ router = APIRouter()
 
 LOCAL_TZ = ZoneInfo(os.environ.get("TZ", "America/New_York"))
 
-ALWAYS_AVAILABLE = {"infrastructure", "system_metrics", "prod_health", "quick_links"}
+# The first four widgets always render — they have static fallbacks or always
+# have *something* to report. The trailing three (weather/reminders/gmail) are
+# self-fetching widgets: they pull from /api/weather, /api/reminders, /api/gmail
+# directly and decide their own visibility (collapsing to nothing when the
+# upstream endpoint isn't wired yet). The layout still needs to reserve a slot
+# for them so the WidgetGrid can mount the components.
+ALWAYS_AVAILABLE = {
+    "infrastructure",
+    "system_metrics",
+    "prod_health",
+    "quick_links",
+    "weather",
+    "reminders",
+    "gmail",
+}
 
 
 def _edition_mood(now: datetime) -> str:

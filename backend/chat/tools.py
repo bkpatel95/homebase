@@ -308,6 +308,9 @@ def pretty(widget_id: str) -> str:
     return {
         "health_wellness": "Health & Wellness",
         "calendar": "Calendar",
+        "weather": "Weather",
+        "reminders": "Reminders",
+        "gmail": "Email",
         "markets": "Markets",
         "media": "Media",
         "nutrition": "Nutrition",

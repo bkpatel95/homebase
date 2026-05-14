@@ -87,6 +87,9 @@ export default function App() {
 const PRETTY = {
   health_wellness: 'Health',
   calendar: 'Calendar',
+  weather: 'Weather',
+  reminders: 'Reminders',
+  gmail: 'Email',
   markets: 'Markets',
   media: 'Media',
   nutrition: 'Nutrition',
