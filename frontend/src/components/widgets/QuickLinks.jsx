@@ -8,6 +8,8 @@ const FALLBACK_LINKS = [
   { name: 'Requests', href: 'https://requests.lebcp.com', blurb: 'Overseerr' },
 ];
 
+// QuickLinks is the only widget that always renders — it has a static
+// fallback list, so there is nothing to be stale about and no error path.
 export default function QuickLinks({ data }) {
   const links = data && data.links && data.links.length ? data.links : FALLBACK_LINKS;
 

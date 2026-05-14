@@ -1,4 +1,6 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 function MetricBox({ label, value, unit, tone = 'paper' }) {
   const toneClass =
@@ -23,7 +25,30 @@ function MetricBox({ label, value, unit, tone = 'paper' }) {
   );
 }
 
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">Health &amp; Wellness</div>
+          <h3 className="headline text-[1.35rem] mt-1">The Morning Vitals</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
 export default function HealthWellness({ data }) {
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="health data" detail={data.error} />
+      </section>
+    );
+  }
+
   if (!data?.available) return null;
 
   const fmt1 = (n) => (n == null ? null : Number(n).toFixed(1));
@@ -31,10 +56,7 @@ export default function HealthWellness({ data }) {
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">Health & Wellness</div>
-        <h3 className="headline text-[1.35rem] mt-1">The Morning Vitals</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         <MetricBox label="Sleep score" value={data.sleep_score} tone="sleep" />
