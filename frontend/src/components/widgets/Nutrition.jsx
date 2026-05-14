@@ -4,10 +4,26 @@ function Macros({ m }) {
   if (!m) return null;
   return (
     <div className="meta-sans tabular flex flex-wrap gap-x-3 mt-1">
-      {m.protein  && <span><strong className="text-ink">P</strong> {m.protein}</span>}
-      {m.carbs    && <span><strong className="text-ink">C</strong> {m.carbs}</span>}
-      {m.fat      && <span><strong className="text-ink">F</strong> {m.fat}</span>}
-      {m.calories && <span><strong className="text-ink">{m.calories}</strong></span>}
+      {m.protein && (
+        <span>
+          <strong className="text-ink">P</strong> {m.protein}
+        </span>
+      )}
+      {m.carbs && (
+        <span>
+          <strong className="text-ink">C</strong> {m.carbs}
+        </span>
+      )}
+      {m.fat && (
+        <span>
+          <strong className="text-ink">F</strong> {m.fat}
+        </span>
+      )}
+      {m.calories && (
+        <span>
+          <strong className="text-ink">{m.calories}</strong>
+        </span>
+      )}
     </div>
   );
 }
@@ -40,7 +56,8 @@ export default function Nutrition({ data }) {
 
       {data.total_calories_est && (
         <p className="byline mt-3">
-          Day estimated at ~{data.total_calories_est.toLocaleString()} kcal across {meals.length} meal{meals.length === 1 ? '' : 's'}.
+          Day estimated at ~{data.total_calories_est.toLocaleString()} kcal across {meals.length}{' '}
+          meal{meals.length === 1 ? '' : 's'}.
         </p>
       )}
     </section>

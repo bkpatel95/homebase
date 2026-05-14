@@ -41,6 +41,13 @@ services:
       - PLEX_URL=${PLEX_URL:-http://host.containers.internal:32400}
       - OVERSEERR_URL=${OVERSEERR_URL:-http://host.containers.internal:5055}
       - MARKETS_EXTRA=${MARKETS_EXTRA:-}
+      # Observability — SENTRY_DSN is loaded from env_file. ENV + BUILD_VERSION
+      # feed Sentry's environment/release tags and pick the default log format.
+      # See deploy/.env.example.
+      - ENV=${ENV:-production}
+      - BUILD_VERSION=${BUILD_VERSION:-dev}
+      - LOG_FORMAT=${LOG_FORMAT:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     ports:
       - "8095:8095"
     volumes:

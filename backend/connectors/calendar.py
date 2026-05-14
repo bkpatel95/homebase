@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,8 +27,11 @@ class CalendarConnector(Connector):
     widget_ids = ("calendar",)
     config_schema = (
         ConfigField(
-            name="events_path", label="Events JSON path", type="path", required=True,
-            help="File written by your calendar syncer. Expected shape: {\"events\": [...]}",
+            name="events_path",
+            label="Events JSON path",
+            type="path",
+            required=True,
+            help='File written by your calendar syncer. Expected shape: {"events": [...]}',
             placeholder="/data/calendar/today.json",
             default="/data/calendar/today.json",
             env_fallback="CALENDAR_EVENTS",
@@ -46,35 +49,44 @@ class CalendarConnector(Connector):
         return {"ok": True, "detail": f"feed present ({p})"}
 
     async def collect(self, config: dict[str, Any]) -> dict[str, Any]:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         path = Path(config.get("events_path") or "")
         if not path.exists():
-            return {"calendar": {
-                "available": False,
-                "reason": f"No calendar feed at {path}.",
-                "events": [],
-                "count": 0,
-                "collected_at": now,
-            }}
+            return {
+                "calendar": {
+                    "available": False,
+                    "reason": f"No calendar feed at {path}.",
+                    "events": [],
+                    "count": 0,
+                    "collected_at": now,
+                }
+            }
         try:
             raw = json.loads(path.read_text())
         except Exception as e:
-            return {"calendar": {
-                "available": False, "error": f"parse failed: {e}",
-                "events": [], "count": 0, "collected_at": now,
-            }}
+            return {
+                "calendar": {
+                    "available": False,
+                    "error": f"parse failed: {e}",
+                    "events": [],
+                    "count": 0,
+                    "collected_at": now,
+                }
+            }
 
         events_in = raw.get("events", []) if isinstance(raw, dict) else (raw if isinstance(raw, list) else [])
         today_events = [e for e in events_in if _is_today(e.get("start", ""))]
         today_events.sort(key=lambda e: e.get("start", ""))
 
-        return {"calendar": {
-            "available": bool(today_events),
-            "events": today_events[:8],
-            "count": len(today_events),
-            "fetched_at": raw.get("fetched_at") if isinstance(raw, dict) else None,
-            "collected_at": now,
-        }}
+        return {
+            "calendar": {
+                "available": bool(today_events),
+                "events": today_events[:8],
+                "count": len(today_events),
+                "fetched_at": raw.get("fetched_at") if isinstance(raw, dict) else None,
+                "collected_at": now,
+            }
+        }
 
 
 connector = CalendarConnector()

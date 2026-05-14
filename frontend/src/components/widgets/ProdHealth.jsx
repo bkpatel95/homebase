@@ -26,7 +26,10 @@ export default function ProdHealth({ data }) {
   }
 
   const issues = data.issues || [];
-  const status = issues.length === 0 ? 'All Clear' : `${issues.length} Item${issues.length === 1 ? '' : 's'} of Note`;
+  const status =
+    issues.length === 0
+      ? 'All Clear'
+      : `${issues.length} Item${issues.length === 1 ? '' : 's'} of Note`;
 
   return (
     <section>
@@ -45,14 +48,12 @@ export default function ProdHealth({ data }) {
       {issues.length > 0 && (
         <ul className="mt-3 list-disc pl-5 body-serif text-[14px] space-y-1">
           {issues.slice(0, 8).map((it, i) => (
-            <li key={i}>{typeof it === 'string' ? it : (it.message || JSON.stringify(it))}</li>
+            <li key={i}>{typeof it === 'string' ? it : it.message || JSON.stringify(it)}</li>
           ))}
         </ul>
       )}
 
-      {data.summary && (
-        <p className="body-serif text-[14px] mt-3 italic">{data.summary}</p>
-      )}
+      {data.summary && <p className="body-serif text-[14px] mt-3 italic">{data.summary}</p>}
     </section>
   );
 }

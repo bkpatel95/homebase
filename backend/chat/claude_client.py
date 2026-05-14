@@ -11,19 +11,21 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
-from anthropic import AsyncAnthropic, BadRequestError, APIStatusError
+from anthropic import APIStatusError, AsyncAnthropic, BadRequestError
 
-from .tools import TOOLS, execute as execute_tool
+from .tools import TOOLS
+from .tools import execute as execute_tool
 
 log = logging.getLogger("homebase.chat")
 
 # Per-tier models.
 MODEL_LAYOUT_FAST = "claude-haiku-4-5-20251001"
-MODEL_DEFAULT     = "claude-sonnet-4-6"
-MAX_TOKENS        = 1024
-MAX_TOOL_LOOPS    = 4  # Defensive cap on the tool-use loop
+MODEL_DEFAULT = "claude-sonnet-4-6"
+MAX_TOKENS = 1024
+MAX_TOOL_LOOPS = 4  # Defensive cap on the tool-use loop
 
 
 _client: AsyncAnthropic | None = None
@@ -52,15 +54,31 @@ def pick_model(user_text: str) -> str:
         return MODEL_DEFAULT
     if any(w in t for w in ("how", "what", "why", "summarize", "summary", "trend", "compare", "explain", "tell me")):
         return MODEL_DEFAULT
-    layout_words = ("move", "hide", "show", "remove", "swap", "reorder",
-                    "top", "bottom", "first", "ticker", "reset", "put", "bring back")
+    layout_words = (
+        "move",
+        "hide",
+        "show",
+        "remove",
+        "swap",
+        "reorder",
+        "top",
+        "bottom",
+        "first",
+        "ticker",
+        "reset",
+        "put",
+        "bring back",
+    )
     if any(w in t for w in layout_words):
         return MODEL_LAYOUT_FAST
     return MODEL_DEFAULT
 
 
 async def stream_with_tools(
-    *, system_prompt: str, messages: list[dict[str, Any]], model: str,
+    *,
+    system_prompt: str,
+    messages: list[dict[str, Any]],
+    model: str,
 ) -> AsyncIterator[dict[str, Any]]:
     """Run the tool-use loop and yield server-sent events.
 
@@ -80,7 +98,7 @@ async def stream_with_tools(
 
     yield {"type": "model", "name": model}
 
-    for loop_i in range(MAX_TOOL_LOOPS):
+    for _ in range(MAX_TOOL_LOOPS):
         try:
             async with client.messages.stream(
                 model=model,
@@ -124,12 +142,14 @@ async def stream_with_tools(
             yield {"type": "tool_use", "tool": block.name, "input": block.input, "id": block.id}
             output = await execute_tool(block.name, block.input)
             yield {"type": "tool_result", "tool": block.name, "output": output, "id": block.id}
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": block.id,
-                "content": _stringify_tool_output(output),
-                "is_error": not output.get("ok", True),
-            })
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": _stringify_tool_output(output),
+                    "is_error": not output.get("ok", True),
+                }
+            )
 
         messages.append({"role": "user", "content": tool_results})
         # Loop and let Claude write the natural-language reply.
@@ -153,4 +173,5 @@ def _stringify_tool_output(output: dict[str, Any]) -> str:
     on tokens.
     """
     import json
+
     return json.dumps(output, default=str)

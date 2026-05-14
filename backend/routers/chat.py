@@ -16,13 +16,15 @@ import asyncio
 import json
 import logging
 import os
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..chat import claude_client, session, system_prompt as sp
+from ..chat import claude_client, session
+from ..chat import system_prompt as sp
 from ..chat.tools import TOOLS  # noqa: F401  (forces tool registration on import)
 from ..routers.edition import get_edition
 
@@ -61,7 +63,7 @@ async def _yield_with_keepalive(gen: AsyncIterator[dict[str, Any]]) -> AsyncIter
         while True:
             try:
                 ev = await asyncio.wait_for(queue.get(), timeout=15.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield ": keepalive\n\n"
                 continue
             if ev is None:
@@ -75,8 +77,10 @@ async def _yield_with_keepalive(gen: AsyncIterator[dict[str, Any]]) -> AsyncIter
 async def chat(req: ChatRequest, request: Request):
     if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
         return JSONResponse(
-            {"error": "chat_unavailable",
-             "detail": "ANTHROPIC_API_KEY is not configured on the server. Add it to prod/homebase/.env and restart the daily-bhavi container."},
+            {
+                "error": "chat_unavailable",
+                "detail": "ANTHROPIC_API_KEY is not configured on the server. Add it to prod/homebase/.env and restart the daily-bhavi container.",
+            },
             status_code=503,
         )
 
@@ -88,7 +92,7 @@ async def chat(req: ChatRequest, request: Request):
     # Build the conversation: persisted history + this new user turn.
     history = session.store.get(sid)
     user_message = {"role": "user", "content": user_text}
-    messages = history + [user_message]
+    messages = [*history, user_message]
     # Pre-record the user turn — even if the model fails, we keep history.
     session.store.append(sid, user_message)
 
@@ -113,7 +117,7 @@ async def chat(req: ChatRequest, request: Request):
         finally:
             # Persist any assistant turns + tool_result blocks (everything after
             # the initial user message we already appended).
-            new_turns = captured[len(history) + 1:]
+            new_turns = captured[len(history) + 1 :]
             for m in new_turns:
                 session.store.append(sid, m)
 
@@ -122,7 +126,7 @@ async def chat(req: ChatRequest, request: Request):
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache, no-transform",
-            "X-Accel-Buffering": "no",   # tell nginx not to buffer the SSE stream
+            "X-Accel-Buffering": "no",  # tell nginx not to buffer the SSE stream
             "Connection": "keep-alive",
         },
     )

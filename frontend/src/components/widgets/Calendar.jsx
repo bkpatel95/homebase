@@ -45,9 +45,7 @@ export default function Calendar({ data }) {
               </div>
               {(ev.location || ev.meeting_link) && (
                 <div className="meta-sans mt-0.5">
-                  {ev.meeting_link
-                    ? <a href={ev.meeting_link}>Join meeting</a>
-                    : ev.location}
+                  {ev.meeting_link ? <a href={ev.meeting_link}>Join meeting</a> : ev.location}
                 </div>
               )}
             </li>
@@ -55,7 +53,9 @@ export default function Calendar({ data }) {
         })}
       </ul>
 
-      <p className="byline mt-3">{data.count} event{data.count === 1 ? '' : 's'} on the schedule.</p>
+      <p className="byline mt-3">
+        {data.count} event{data.count === 1 ? '' : 's'} on the schedule.
+      </p>
     </section>
   );
 }

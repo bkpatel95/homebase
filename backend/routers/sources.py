@@ -50,15 +50,19 @@ async def configure_source(connector_id: str, payload: ConfigurePayload):
         raise HTTPException(404, detail=f"unknown connector '{connector_id}'")
 
     schema_fields = {f.name for f in c.config_schema}
-    unknown = [k for k in payload.config.keys() if k not in schema_fields]
+    unknown = [k for k in payload.config if k not in schema_fields]
     if unknown:
         raise HTTPException(400, detail=f"unknown fields for {connector_id}: {unknown}")
 
     connectors.store.save_config(connector_id, payload.config)
-    await ws_manager.broadcast({
-        "type": "edition_dirty", "reason": "sources",
-        "connector_id": connector_id, "action": "configure",
-    })
+    await ws_manager.broadcast(
+        {
+            "type": "edition_dirty",
+            "reason": "sources",
+            "connector_id": connector_id,
+            "action": "configure",
+        }
+    )
     return _describe_one(connector_id)
 
 
@@ -78,8 +82,12 @@ async def delete_source(connector_id: str):
         raise HTTPException(404, detail=f"unknown connector '{connector_id}'")
     removed = connectors.store.delete(connector_id)
     if removed:
-        await ws_manager.broadcast({
-            "type": "edition_dirty", "reason": "sources",
-            "connector_id": connector_id, "action": "delete",
-        })
+        await ws_manager.broadcast(
+            {
+                "type": "edition_dirty",
+                "reason": "sources",
+                "connector_id": connector_id,
+                "action": "delete",
+            }
+        )
     return {"removed": removed, "source": _describe_one(connector_id)}

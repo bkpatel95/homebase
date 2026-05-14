@@ -14,15 +14,15 @@ import Nutrition from './widgets/Nutrition.jsx';
 // each widget into its slot.
 
 const COMPONENT_FOR = {
-  infrastructure:  (w) => <InfraHealth     data={w.infrastructure} />,
-  system_metrics:  (w) => <SystemMetrics   data={w.system_metrics} />,
-  prod_health:     (w) => <ProdHealth      data={w.prod_health} />,
-  quick_links:     (w) => <QuickLinks      data={w.quick_links} />,
-  health_wellness: (w) => <HealthWellness  data={w.health_wellness} />,
-  calendar:        (w) => <Calendar        data={w.calendar} />,
-  markets:         (w) => <Markets         data={w.markets} />,
-  media:           (w) => <Media           data={w.media} />,
-  nutrition:       (w) => <Nutrition       data={w.nutrition} />,
+  infrastructure: (w) => <InfraHealth data={w.infrastructure} />,
+  system_metrics: (w) => <SystemMetrics data={w.system_metrics} />,
+  prod_health: (w) => <ProdHealth data={w.prod_health} />,
+  quick_links: (w) => <QuickLinks data={w.quick_links} />,
+  health_wellness: (w) => <HealthWellness data={w.health_wellness} />,
+  calendar: (w) => <Calendar data={w.calendar} />,
+  markets: (w) => <Markets data={w.markets} />,
+  media: (w) => <Media data={w.media} />,
+  nutrition: (w) => <Nutrition data={w.nutrition} />,
 };
 
 function LeadStory({ edition }) {
@@ -87,7 +87,7 @@ function LeadStory({ edition }) {
     <Story
       kicker="Operations Desk"
       headline="All Systems Quiet on the Home Front"
-      body={`Every one of the ${total} tracked containers reports steady. ${layout.overrides_active ? "The edition is laid out to your taste." : "A routine morning at homebase — read on for the day's columns."}`}
+      body={`Every one of the ${total} tracked containers reports steady. ${layout.overrides_active ? 'The edition is laid out to your taste.' : "A routine morning at homebase — read on for the day's columns."}`}
     />
   );
 }
@@ -103,14 +103,18 @@ function Story({ kicker, headline, body }) {
   );
 }
 
-function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+function cap(s) {
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
+}
 
 function formatStart(iso) {
   if (!iso) return 'an unspecified hour';
   try {
     const d = new Date(iso.length === 10 ? iso + 'T09:00:00' : iso);
     return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  } catch { return iso; }
+  } catch {
+    return iso;
+  }
 }
 
 export default function WidgetGrid({ edition }) {
@@ -133,7 +137,10 @@ export default function WidgetGrid({ edition }) {
           {columns.map((keys, ci) => {
             const isLast = ci === columns.length - 1;
             return (
-              <div key={ci} className={`flex flex-col gap-6 ${isLast ? '' : 'col-rule-right lg-only'}`}>
+              <div
+                key={ci}
+                className={`flex flex-col gap-6 ${isLast ? '' : 'col-rule-right lg-only'}`}
+              >
                 {keys.map((k) => (
                   <div key={k}>{COMPONENT_FOR[k]?.(widgets) || null}</div>
                 ))}

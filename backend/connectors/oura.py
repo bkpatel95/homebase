@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +16,8 @@ OURA_API = "https://api.ouraring.com/v2/usercollection"
 
 async def _api(client: httpx.AsyncClient, token: str, path: str, params: dict) -> dict:
     r = await client.get(
-        f"{OURA_API}{path}", params=params,
+        f"{OURA_API}{path}",
+        params=params,
         headers={"Authorization": f"Bearer {token}"},
     )
     r.raise_for_status()
@@ -38,20 +39,27 @@ class OuraConnector(Connector):
     widget_ids = ("health_wellness",)
     config_schema = (
         ConfigField(
-            name="token", label="Personal access token", type="password",
+            name="token",
+            label="Personal access token",
+            type="password",
             help="Generate at cloud.ouraring.com/personal-access-tokens. Optional if a summary file is provided.",
             env_fallback="OURA_TOKEN",
         ),
         ConfigField(
-            name="summary_path", label="Summary file (fallback)", type="path",
+            name="summary_path",
+            label="Summary file (fallback)",
+            type="path",
             help="Path to a daily-summary.json file rsync'd from another machine.",
             placeholder="/data/health-data/daily-summary.json",
             default="/data/health-data/daily-summary.json",
             env_fallback="OURA_SUMMARY",
         ),
         ConfigField(
-            name="timeout", label="HTTP timeout (seconds)", type="number",
-            default="4.0", env_fallback="OURA_TIMEOUT",
+            name="timeout",
+            label="HTTP timeout (seconds)",
+            type="number",
+            default="4.0",
+            env_fallback="OURA_TIMEOUT",
         ),
     )
 
@@ -84,7 +92,7 @@ class OuraConnector(Connector):
         return {"ok": False, "detail": "no token and no summary file"}
 
     async def collect(self, config: dict[str, Any]) -> dict[str, Any]:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         token = (config.get("token") or "").strip()
         timeout = _to_float(config.get("timeout"), 4.0)
 
@@ -99,11 +107,13 @@ class OuraConnector(Connector):
             data["collected_at"] = now
             return {"health_wellness": data}
 
-        return {"health_wellness": {
-            "available": False,
-            "reason": "No Oura token set and no daily-summary.json on disk.",
-            "collected_at": now,
-        }}
+        return {
+            "health_wellness": {
+                "available": False,
+                "reason": "No Oura token set and no daily-summary.json on disk.",
+                "collected_at": now,
+            }
+        }
 
     async def _from_api(self, token: str, timeout: float) -> dict[str, Any] | None:
         end = date.today()

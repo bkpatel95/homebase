@@ -16,24 +16,33 @@ export default function App() {
 
   useEffect(() => {
     fetch('/api/whoami', { credentials: 'same-origin' })
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setUser(d.email))
       .catch(() => {});
   }, []);
 
   // Server pushes edition_dirty → refetch edition, show a toast.
-  const onDirty = useCallback((msg) => {
-    refresh();
-    setToast(
-      msg.reason === 'ticker' ? 'Ticker updated' :
-      msg.reason === 'layout_reset' || msg.reason === 'reset' ? 'Layout reset' :
-      msg.reason === 'hide' ? `Hidden ${prettyName(msg.widget)}` :
-      msg.reason === 'show' ? `Showing ${prettyName(msg.widget)}` :
-      msg.reason === 'move' ? `Moved ${prettyName(msg.widget)}` :
-      msg.reason === 'sources' ? 'Sources updated' :
-      'Layout updated'
-    );
-  }, [refresh]);
+  const onDirty = useCallback(
+    (msg) => {
+      refresh();
+      setToast(
+        msg.reason === 'ticker'
+          ? 'Ticker updated'
+          : msg.reason === 'layout_reset' || msg.reason === 'reset'
+            ? 'Layout reset'
+            : msg.reason === 'hide'
+              ? `Hidden ${prettyName(msg.widget)}`
+              : msg.reason === 'show'
+                ? `Showing ${prettyName(msg.widget)}`
+                : msg.reason === 'move'
+                  ? `Moved ${prettyName(msg.widget)}`
+                  : msg.reason === 'sources'
+                    ? 'Sources updated'
+                    : 'Layout updated'
+      );
+    },
+    [refresh]
+  );
   useEditionSocket({ onDirty });
 
   return (
@@ -41,11 +50,7 @@ export default function App() {
       <Toast message={toast} onDone={() => setToast(null)} />
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16">
-        <Masthead
-          user={user}
-          mood={edition?.mood}
-          onOpenSources={() => setSourcesOpen(true)}
-        />
+        <Masthead user={user} mood={edition?.mood} onOpenSources={() => setSourcesOpen(true)} />
         <Ticker edition={edition} />
 
         <main className="mt-6">
@@ -72,11 +77,7 @@ export default function App() {
         </footer>
       </div>
 
-      <SourcesPanel
-        open={sourcesOpen}
-        onClose={() => setSourcesOpen(false)}
-        onChange={refresh}
-      />
+      <SourcesPanel open={sourcesOpen} onClose={() => setSourcesOpen(false)} onChange={refresh} />
 
       <ChatBar onLayoutChange={refresh} />
     </div>
@@ -95,4 +96,6 @@ const PRETTY = {
   quick_links: 'Quick Links',
 };
 
-function prettyName(id) { return PRETTY[id] || id || ''; }
+function prettyName(id) {
+  return PRETTY[id] || id || '';
+}
