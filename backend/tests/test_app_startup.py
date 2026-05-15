@@ -88,5 +88,15 @@ def test_app_has_expected_routes():
     from backend.app import app
 
     paths = {r.path for r in app.routes}
-    for required in ("/api/health", "/api/whoami", "/api/edition", "/api/layout", "/api/sources", "/api/chat"):
+    for required in (
+        "/api/health",
+        "/api/whoami",
+        "/api/edition",
+        "/api/layout",
+        "/api/sources",
+        "/api/chat",
+        "/api/auth/google/login",
+        "/api/auth/google/callback",
+        "/api/auth/google/status",
+    ):
         assert required in paths, f"missing route {required}"

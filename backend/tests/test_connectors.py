@@ -17,6 +17,7 @@ import httpx
 import respx
 
 from backend.connectors.calendar import CalendarConnector
+from backend.connectors.gmail import GMAIL_API, GmailConnector
 from backend.connectors.oura import OURA_API, OuraConnector
 from backend.connectors.plex import PlexConnector
 
@@ -279,3 +280,199 @@ def test_calendar_is_configured_when_path_field_has_value(monkeypatch):
     # Default is set on the field, so even {} resolves to "configured".
     assert CalendarConnector().is_configured({}) is True
     assert CalendarConnector().is_configured({"events_path": "/anywhere"}) is True
+
+
+# ─── Calendar via Google API ─────────────────────────────────────────────────
+
+
+@respx.mock
+async def test_calendar_google_path_normalises_events(monkeypatch, tmp_path):
+    """When `source=google` and the OAuth token store has live creds, the
+    connector calls the Calendar API and reshapes each event into the same
+    envelope the file feed uses (start/title/etc.)."""
+    from backend import google_oauth
+
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    tokens = tmp_path / "google_oauth.json"
+    monkeypatch.setattr(google_oauth, "TOKENS_PATH", tokens)
+    tokens.write_text(
+        json.dumps(
+            {
+                "access_token": "live-access",
+                "refresh_token": "r",
+                "expires_at": 9_999_999_999,  # very far in the future
+                "email": "bhavi@example.com",
+            }
+        )
+    )
+
+    today = date.today().isoformat()
+    respx.get("https://www.googleapis.com/calendar/v3/calendars/primary/events").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "items": [
+                    {
+                        "id": "evt-1",
+                        "summary": "Standup",
+                        "start": {"dateTime": f"{today}T15:00:00Z"},
+                        "end": {"dateTime": f"{today}T15:30:00Z"},
+                        "htmlLink": "https://cal/evt-1",
+                    },
+                    {
+                        "id": "evt-2",
+                        "summary": "Lunch",
+                        "start": {"dateTime": f"{today}T12:00:00Z"},
+                        "end": {"dateTime": f"{today}T13:00:00Z"},
+                    },
+                ]
+            },
+        )
+    )
+
+    out = await CalendarConnector().collect({"source": "google", "calendar_id": "primary"})
+    cal = out["calendar"]
+    assert cal["available"] is True
+    assert cal["count"] == 2
+    assert cal["source"] == "google-api"
+    # Order by start: Lunch at 12 before Standup at 15.
+    assert [e["title"] for e in cal["events"]] == ["Lunch", "Standup"]
+
+
+@respx.mock
+async def test_calendar_explicit_google_source_does_not_fall_back(monkeypatch, tmp_path):
+    """`source=google` means "use the API or report the error" — silently
+    rendering a stale file would mask a real outage."""
+    from backend import google_oauth
+
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    tokens = tmp_path / "google_oauth.json"
+    monkeypatch.setattr(google_oauth, "TOKENS_PATH", tokens)
+    tokens.write_text(json.dumps({"access_token": "a", "refresh_token": "r", "expires_at": 9_999_999_999}))
+
+    respx.get("https://www.googleapis.com/calendar/v3/calendars/primary/events").mock(
+        side_effect=httpx.ConnectError("boom")
+    )
+
+    feed = tmp_path / "today.json"
+    feed.write_text(json.dumps({"events": []}))  # file would have worked
+    out = await CalendarConnector().collect({"source": "google", "calendar_id": "primary", "events_path": str(feed)})
+    cal = out["calendar"]
+    assert cal["available"] is False
+    assert "error" in cal
+
+
+# ─── Gmail ───────────────────────────────────────────────────────────────────
+
+
+async def test_gmail_unavailable_when_oauth_not_configured(monkeypatch):
+    """No GOOGLE_CLIENT_ID → connector returns a tidy unavailable payload
+    pointing the operator at the OAuth flow."""
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_CLIENT_SECRET", raising=False)
+    out = await GmailConnector().collect({})
+    g = out["gmail"]
+    assert g["available"] is False
+    assert "OAuth" in g["reason"]
+
+
+async def test_gmail_unavailable_when_not_connected(monkeypatch, tmp_path):
+    """OAuth client configured but no refresh token on disk → reason
+    string points the operator at /api/auth/google/login."""
+    from backend import google_oauth
+
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    monkeypatch.setattr(google_oauth, "TOKENS_PATH", tmp_path / "missing.json")
+    out = await GmailConnector().collect({})
+    g = out["gmail"]
+    assert g["available"] is False
+    assert "/api/auth/google/login" in g["reason"]
+
+
+@respx.mock
+async def test_gmail_collect_returns_unread_total_and_previews(monkeypatch, tmp_path):
+    """End-to-end: stored tokens → label fetch → metadata fan-out → final
+    payload. The payload shape is what the widget binds to."""
+    from backend import google_oauth
+
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    tokens = tmp_path / "google_oauth.json"
+    monkeypatch.setattr(google_oauth, "TOKENS_PATH", tokens)
+    tokens.write_text(
+        json.dumps(
+            {
+                "access_token": "a",
+                "refresh_token": "r",
+                "expires_at": 9_999_999_999,
+                "email": "bhavi@example.com",
+            }
+        )
+    )
+
+    respx.get(f"{GMAIL_API}/labels/INBOX").mock(return_value=httpx.Response(200, json={"threadsUnread": 3}))
+    respx.get(f"{GMAIL_API}/messages").mock(
+        return_value=httpx.Response(
+            200,
+            json={"messages": [{"id": "m1"}, {"id": "m2"}]},
+        )
+    )
+    respx.get(f"{GMAIL_API}/messages/m1").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "snippet": "hello there",
+                "payload": {
+                    "headers": [
+                        {"name": "From", "value": "Alice <a@example.com>"},
+                        {"name": "Subject", "value": "Coffee?"},
+                        {"name": "Date", "value": "Wed, 14 May 2026 10:00:00 -0400"},
+                    ]
+                },
+            },
+        )
+    )
+    respx.get(f"{GMAIL_API}/messages/m2").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "snippet": "the report",
+                "payload": {
+                    "headers": [
+                        {"name": "From", "value": "Bob"},
+                        {"name": "Subject", "value": "Q2"},
+                    ]
+                },
+            },
+        )
+    )
+
+    out = await GmailConnector().collect({})
+    g = out["gmail"]
+    assert g["available"] is True
+    assert g["unread_total"] == 3
+    assert len(g["unread_preview"]) == 2
+    assert g["unread_preview"][0]["subject"] == "Coffee?"
+    assert g["email"] == "bhavi@example.com"
+
+
+async def test_gmail_is_configured_requires_oauth_and_connection(monkeypatch, tmp_path):
+    """The Sources panel uses is_configured() to decide the status pill.
+    Both halves of the OAuth setup must be in place for it to flip green."""
+    from backend import google_oauth
+
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    assert GmailConnector().is_configured({}) is False
+
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    monkeypatch.setattr(google_oauth, "TOKENS_PATH", tmp_path / "missing.json")
+    assert GmailConnector().is_configured({}) is False
+
+    tokens = tmp_path / "google_oauth.json"
+    monkeypatch.setattr(google_oauth, "TOKENS_PATH", tokens)
+    tokens.write_text(json.dumps({"refresh_token": "r"}))
+    assert GmailConnector().is_configured({}) is True

@@ -35,6 +35,11 @@ services:
       - CALENDAR_EVENTS=/data/calendar/today.json
       - RECIPE_DIR=/data/recipes
       - LAYOUT_PATH=/data/layout.json
+      # Google OAuth — GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET come in via
+      # env_file (.env, chmod 600). The redirect URI must match the OAuth
+      # client config in Google Cloud Console.
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://homebase.lebcp.com/api/auth/google/callback}
+      - GOOGLE_OAUTH_TOKENS_PATH=/data/google_oauth.json
       - REQUIRE_AUTH=${HOMEBASE_REQUIRE_AUTH:-true}
       - ALLOWED_EMAILS=${HOMEBASE_ALLOWED_EMAILS:-bhavipatel141@gmail.com}
       # Non-secret URLs keep defaults here; tokens are now in env_file only.

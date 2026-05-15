@@ -41,6 +41,12 @@ services:
       OURA_SUMMARY: /data/health-data/daily-summary.json
       CALENDAR_EVENTS: /data/calendar/today.json
       RECIPE_DIR: /data/recipes
+      # Google OAuth — leave GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET empty
+      # in .env to keep the connectors disabled locally, or set them to a
+      # dev OAuth client that allows http://localhost:3000/api/auth/google/callback
+      # as a redirect URI.
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/auth/google/callback}
+      GOOGLE_OAUTH_TOKENS_PATH: /data/google_oauth.json
       # No Prometheus running locally — leave the URL pointing at a name
       # that will fail-fast so the connector surfaces a clean error rather
       # than hanging on a real network request.

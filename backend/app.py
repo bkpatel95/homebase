@@ -1,6 +1,10 @@
 """The Daily Bhavi — FastAPI backend.
 
 Mounted by nginx at /api/*. Routes:
+  GET   /api/auth/google/login             — 302 to Google's OAuth consent screen
+  GET   /api/auth/google/callback          — OAuth code exchange + token storage
+  GET   /api/auth/google/status            — connection state for the UI
+  DEL   /api/auth/google                   — revoke and clear local tokens
   GET   /api/edition                       — compiled widget payload + effective layout + ticker
   GET   /api/layout                        — current layout overrides
   PUT   /api/layout                        — replace layout overrides (broadcasts to clients)
@@ -29,7 +33,7 @@ from fastapi.responses import JSONResponse
 
 from .config import validate_env
 from .logging_config import configure_logging
-from .routers import chat, edition, layout, sources, ws
+from .routers import auth, chat, edition, layout, sources, ws
 
 configure_logging()
 log = logging.getLogger("homebase.app")
@@ -131,3 +135,4 @@ app.include_router(layout.router, prefix="/api")
 app.include_router(sources.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(ws.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
