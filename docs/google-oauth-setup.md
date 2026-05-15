@@ -1,149 +1,156 @@
 # Google OAuth setup for homebase
 
-The Gmail and Google Calendar connectors both authenticate through a
-single shared OAuth flow at `/api/auth/google/login`. The operator
-(`bhavipatel141@gmail.com`) signs in once; the backend keeps a refresh
-token at `/data/google_oauth.json` and refreshes access tokens on demand
-for both connectors.
+The Gmail and Google Calendar connectors share one OAuth 2.0 flow at
+`/api/auth/google/login`. The operator (`bhavipatel141@gmail.com`) signs
+in once; the backend keeps a refresh token at `/data/google_oauth.json`
+and refreshes access tokens on demand for both connectors.
 
-This doc covers what has to happen in the Google Cloud Console before
-that flow will work. The code in this repo is ready to consume the
-credentials — there is nothing to deploy after step 5 except restarting
-the container.
+The repo is ready to consume the credentials — the only remaining work
+is in the Google Cloud Console, then pasting two values into prod's
+`.env`. This doc assumes you already have a GCP project; if you don't,
+create one first and come back.
 
-## What you'll end up with
+## What we need from you
 
-- A Google Cloud project (e.g. `homebase-prod`)
-- Gmail API and Google Calendar API enabled on that project
-- An OAuth consent screen configured in **External** mode and published
-- An OAuth 2.0 **Web application** client with:
-  - Authorized redirect URI: `https://homebase.lebcp.com/api/auth/google/callback`
-  - Client ID + Client Secret pasted into `~/homebase/deploy/.env` on prod
+By the end of this doc you'll send back two values:
 
-Once those exist, sign in once at
-`https://homebase.lebcp.com/api/auth/google/login`. The callback stores
-the refresh token in `/srv/containers/homebase/data/google_oauth.json`
-(chmod 600) and both connectors flip to "connected".
+```
+GOOGLE_CLIENT_ID=<from step 3>
+GOOGLE_CLIENT_SECRET=<from step 3>
+```
 
-## Step 1 — create the Google Cloud project
+That's it. The redirect URI is pinned to
+`https://homebase.lebcp.com/api/auth/google/callback`; everything else
+is wired up.
 
-1. Open the [Google Cloud Console](https://console.cloud.google.com/).
-2. In the project picker (top bar) → **New Project**.
-3. Name it something memorable: `homebase-prod`. Leave the org blank if
-   prompted (this is a personal account).
-4. Click **Create**, then switch the project picker to it.
+## Step 1 — enable the two APIs
 
-## Step 2 — enable the APIs
+In the GCP Console, **make sure your existing project is selected in the
+top bar** before doing anything else (the next steps are
+project-scoped).
 
-In the new project:
+1. **Navigation menu → APIs & Services → Library**.
+2. Search **Gmail API** → click it → **Enable**.
+3. Back to Library. Search **Google Calendar API** → **Enable**.
 
-1. Navigation menu → **APIs & Services** → **Library**.
-2. Search **Gmail API** → **Enable**.
-3. Search **Google Calendar API** → **Enable**.
+Sanity check: **APIs & Services → Enabled APIs & services** should list
+both.
 
-You should now see both under **APIs & Services** → **Enabled APIs**.
+## Step 2 — configure the OAuth consent screen
 
-## Step 3 — configure the OAuth consent screen
+This is the consent dialog Google shows the first time you authorize.
+If your project has never had a consent screen, you'll be guided
+through this; if it already has one, jump to the "make sure scopes are
+right" sub-step below.
 
-This is the screen Google shows when you first authorize the app.
-
-1. **APIs & Services** → **OAuth consent screen**.
-2. **User Type**: **External**. (Internal is only for Google Workspace
-   orgs; a personal Gmail account must use External.)
-3. Click **Create** and fill in:
-   - **App name**: `Homebase` (or `The Daily Bhavi` — only you ever see this).
+1. **APIs & Services → OAuth consent screen**.
+2. **User Type**: **External**. (Internal is Workspace-only; a personal
+   `@gmail.com` account must use External.) Click **Create**.
+3. **App information**:
+   - **App name**: `Homebase` (only you will see this).
    - **User support email**: `bhavipatel141@gmail.com`.
-   - **App logo**: optional.
-   - **App domain → Application home page**: `https://homebase.lebcp.com`.
+   - **App domain → Application home page**: `https://homebase.lebcp.com`
+     (optional but quiets a warning).
    - **Developer contact information**: `bhavipatel141@gmail.com`.
 4. **Save and continue**.
-5. **Scopes** → **Add or remove scopes** → add exactly these:
+5. **Scopes → Add or remove scopes**. The set must be **exactly**:
    - `openid`
    - `.../auth/userinfo.email`
    - `.../auth/gmail.readonly`
    - `.../auth/calendar.readonly`
 
-   These match `SCOPES` in `backend/google_oauth.py`. Don't add write
-   scopes — the app never mutates Gmail or Calendar data.
+   These mirror `SCOPES` in `backend/google_oauth.py`. Don't add any
+   write scopes — the dashboard never mutates Gmail/Calendar data, and
+   Google's verification process is much friendlier for readonly.
 6. **Save and continue**.
-7. **Test users** → add `bhavipatel141@gmail.com` as a test user.
+7. **Test users → Add users** → `bhavipatel141@gmail.com`. **Save and
+   continue**.
 
-   Note: an External app starts in "Testing" mode, which works fine for a
-   single-operator personal dashboard. You can leave it that way
-   indefinitely. The only side effect is that the refresh token expires
-   after **7 days of inactivity** while the app is in Testing. To switch
-   to a stable refresh token that lasts ~180 days, click **Publish app**
-   on the consent screen. Google does not require verification for
-   "sensitive scopes" if your app is only used by accounts you own.
+### Testing vs. Published
 
-   Recommended: publish it. Personal account → no verification needed
-   for the readonly scopes we're using.
+The consent screen starts in **Testing** mode. That works for a
+single-operator personal dashboard, with one catch: in Testing mode
+**refresh tokens expire after 7 days of inactivity**, which would force
+you to re-auth weekly.
 
-## Step 4 — create the OAuth 2.0 client
+**Recommended**: on the OAuth consent screen page, click **Publish app
+→ Confirm**. With only readonly scopes on a personal account, Google
+won't require verification, and refresh tokens last ~6 months of
+inactivity. You can still keep the app private — "Publish" here just
+means "not in Testing mode."
 
-1. **APIs & Services** → **Credentials** → **Create Credentials** →
-   **OAuth client ID**.
+### If your project already had a consent screen
+
+Open **APIs & Services → OAuth consent screen → Edit App** and verify:
+
+- User Type is **External**.
+- Scopes include the four listed above. Add any missing ones via **Edit
+  → Scopes → Add or remove scopes**.
+- `bhavipatel141@gmail.com` is on the test-users list (only relevant
+  while in Testing mode).
+- Ideally the app is **Published**, not in Testing.
+
+## Step 3 — create the OAuth client
+
+1. **APIs & Services → Credentials → Create credentials → OAuth client
+   ID**.
 2. **Application type**: **Web application**.
-3. **Name**: `homebase backend`.
-4. **Authorized JavaScript origins**: leave empty (we don't initiate
-   from JS).
-5. **Authorized redirect URIs**: add
-   `https://homebase.lebcp.com/api/auth/google/callback`.
+3. **Name**: `homebase backend` (internal label, not user-visible).
+4. **Authorized JavaScript origins**: leave empty. We don't kick off
+   OAuth from the browser; the backend issues the redirect.
+5. **Authorized redirect URIs** → **Add URI**:
+   ```
+   https://homebase.lebcp.com/api/auth/google/callback
+   ```
+   This must match the backend's `GOOGLE_REDIRECT_URI` exactly —
+   scheme, host, path, no trailing slash.
 
-   This must match `GOOGLE_REDIRECT_URI` in the backend's environment
-   exactly — including scheme, host, port, and path. Trailing slashes
-   count.
+   If you want to round-trip the flow locally too, add:
+   ```
+   http://localhost:3000/api/auth/google/callback
+   ```
+   You can list multiple redirect URIs on the same client.
+6. **Create**.
 
-   If you also want to do a local dev round-trip, add
-   `http://localhost:3000/api/auth/google/callback` here too. You can
-   list multiple URIs on the same client.
-6. **Create**. The dialog will show **Your Client ID** and **Your
-   Client Secret**. Copy both — the secret is only shown once. (You can
-   regenerate it later from the Credentials page if needed.)
+A dialog pops up showing **Your Client ID** and **Your Client Secret**.
+**Copy both now** — the secret is only shown once. (You can rotate it
+later from Credentials → the client → **Reset client secret** if
+needed.)
 
-## Step 5 — put the credentials on the prod box
+## Step 4 — hand the credentials to the backend
 
-On the Mac, locally edit `deploy/.env.example` if you need to remember
-the shape, then ssh in:
-
-```sh
-ssh bp@100.91.251.82
-cd ~/homebase/deploy
-# .env is chmod 600 and gitignored.
-vim .env
-```
-
-Set:
+Send the two values back. I'll write them into `~/homebase/deploy/.env`
+on prod and redeploy:
 
 ```
-GOOGLE_CLIENT_ID=<paste client id from step 4>
-GOOGLE_CLIENT_SECRET=<paste client secret from step 4>
-# GOOGLE_REDIRECT_URI defaults to the prod URL; only set it if you
-# changed the redirect URI in the OAuth client.
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
 ```
 
-Then redeploy from the Mac (don't edit anything in `~/homebase/` outside
-`deploy/.env` — the dirty-tree guard in `deploy.sh` will refuse to
-deploy on the next run):
+The `.env` file is chmod 600 and gitignored. `GOOGLE_REDIRECT_URI`
+defaults to the prod URL — no need to set it unless you used a
+different value in step 3.
+
+Deploy:
 
 ```sh
 ssh bp@100.91.251.82 'cd ~/homebase/deploy && ./deploy.sh'
 ```
 
-The startup log should no longer warn about `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET`.
+The startup log should no longer warn about missing `GOOGLE_CLIENT_ID`
+/ `GOOGLE_CLIENT_SECRET`.
 
-## Step 6 — sign in once
+## Step 5 — one-time sign-in
 
 Open `https://homebase.lebcp.com/api/auth/google/login` in a browser.
-Cloudflare Access will already have you authenticated as
-`bhavipatel141@gmail.com`. The backend will 302 to Google's consent
-screen; approve. Google will 302 back to
-`https://homebase.lebcp.com/api/auth/google/callback?code=...`, which
-exchanges the code for tokens and 302s you back to the dashboard with
-`?google=connected`.
+Cloudflare Access will already have you authenticated. The backend
+302s to Google's consent screen → approve → Google 302s back to
+`/api/auth/google/callback?code=...` → the backend exchanges the code,
+stores the refresh token at
+`/srv/containers/homebase/data/google_oauth.json` (chmod 600), and
+redirects you back to the dashboard with `?google=connected`.
 
-To verify:
+Verify from the command line:
 
 ```sh
 curl -H 'Cf-Access-Authenticated-User-Email: bhavipatel141@gmail.com' \
@@ -151,42 +158,35 @@ curl -H 'Cf-Access-Authenticated-User-Email: bhavipatel141@gmail.com' \
 # {"configured":true,"connected":true,"email":"bhavipatel141@gmail.com", ...}
 ```
 
-The Sources panel in the UI will now show Gmail and Google Calendar as
-**connected**, and `/api/edition` will start including their payloads.
+The Sources panel will now show Gmail and Google Calendar as
+**connected**, and `/api/edition` will include their payloads.
 
 ## Troubleshooting
 
-**"redirect_uri_mismatch" on the consent screen.** The redirect URI
-configured in Google Cloud Console does not exactly match
-`GOOGLE_REDIRECT_URI` in the backend. Compare them character-by-character.
+**`redirect_uri_mismatch` on the consent screen.** The redirect URI on
+the OAuth client (step 3) doesn't exactly match the backend's
+`GOOGLE_REDIRECT_URI`. Compare character-by-character — trailing
+slashes and `http` vs `https` count.
 
-**"Google did not return a refresh_token" on the callback.** You've
-consented before with the same scopes, so Google omitted the
-refresh_token from the second consent. Visit
-[Google Account → Apps with access](https://myaccount.google.com/permissions),
-find "Homebase" (or whatever you named it), revoke access, and re-run
-the login flow. The backend requests `prompt=consent` to mitigate this,
-but Google sometimes still suppresses the refresh_token if you previously
-revoked manually and re-consented in the same session.
+**"Google did not return a refresh_token" on the callback.** You
+consented before with the same scopes and Google omitted the
+refresh_token from the new response. Fix:
+[Google Account → Apps with access](https://myaccount.google.com/permissions)
+→ find "Homebase" → **Remove access** → retry the login.
 
-**Refresh stops working after a week.** The app is in Testing mode on
-the consent screen — refresh tokens expire after 7 days of inactivity in
-that mode. Publish the app (Step 3, last paragraph) and re-run the login
-flow once.
+**Refresh stops working after about a week.** The consent screen is
+still in Testing mode. Click **Publish app** on the OAuth consent
+screen page, then re-run `/api/auth/google/login` once.
 
-**"invalid_grant" in the connector logs.** The refresh token was
-revoked, either manually from
-[Google Account permissions](https://myaccount.google.com/permissions)
-or after 6 months of inactivity. Just re-run `/api/auth/google/login`.
+**`invalid_grant` in the connector logs.** The refresh token was
+revoked or expired (6 months of inactivity in Published mode). Re-run
+`/api/auth/google/login` once.
 
 ## Disconnect
 
-To revoke and clear the local tokens:
+To revoke at Google and clear local tokens:
 
 ```sh
 curl -X DELETE -H 'Cf-Access-Authenticated-User-Email: bhavipatel141@gmail.com' \
   https://homebase.lebcp.com/api/auth/google
 ```
-
-This calls Google's revoke endpoint and deletes
-`/srv/containers/homebase/data/google_oauth.json` inside the container.
