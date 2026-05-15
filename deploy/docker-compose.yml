@@ -21,9 +21,10 @@ services:
       args:
         BUILD_VERSION: ${BUILD_VERSION:-dev}
     restart: unless-stopped
-    # Secrets (ANTHROPIC_API_KEY, PLEX_TOKEN, OVERSEERR_API_KEY, OURA_TOKEN)
-    # come in via env_file so podman-compose does NOT expand their values into
-    # the echoed `podman run` command. .env is chmod 600 and gitignored.
+    # Secrets (ANTHROPIC_API_KEY, PLEX_TOKEN, OVERSEERR_API_KEY, OURA_TOKEN,
+    # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) come in via env_file so
+    # podman-compose does NOT expand their values into the echoed `podman run`
+    # command. .env is chmod 600 and gitignored.
     env_file:
       - .env
     environment:
@@ -32,7 +33,6 @@ services:
       - PROMETHEUS_URL=http://prometheus:9090
       - PROD_HEALTH_JSON=/data/health-data/prod-health.json
       - OURA_SUMMARY=/data/health-data/daily-summary.json
-      - CALENDAR_EVENTS=/data/calendar/today.json
       - RECIPE_DIR=/data/recipes
       - LAYOUT_PATH=/data/layout.json
       - REQUIRE_AUTH=${HOMEBASE_REQUIRE_AUTH:-true}
@@ -41,6 +41,10 @@ services:
       - PLEX_URL=${PLEX_URL:-http://host.containers.internal:32400}
       - OVERSEERR_URL=${OVERSEERR_URL:-http://host.containers.internal:5055}
       - MARKETS_EXTRA=${MARKETS_EXTRA:-}
+      # Google Calendar — client id/secret are in env_file; the redirect URI
+      # and token-file path are non-secret config.
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://homebase.lebcp.com/api/auth/google/callback}
+      - GOOGLE_TOKEN_PATH=${GOOGLE_TOKEN_PATH:-/data/google_token.json}
       # Observability — SENTRY_DSN is loaded from env_file. ENV + BUILD_VERSION
       # feed Sentry's environment/release tags and pick the default log format.
       # See deploy/.env.example.
@@ -53,7 +57,6 @@ services:
     volumes:
       - /srv/containers/homebase/data:/data
       - /srv/containers/homebase/health-data:/data/health-data:ro
-      - /srv/containers/homebase/calendar:/data/calendar:ro
       - /srv/containers/homebase/recipes:/data/recipes:ro
     extra_hosts:
       - "host.containers.internal:host-gateway"

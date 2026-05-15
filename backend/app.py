@@ -14,6 +14,10 @@ Mounted by nginx at /api/*. Routes:
   GET   /api/chat/{sid}                    — fetch session transcript (visible text only)
   DEL   /api/chat/{sid}                    — clear a session
   WS    /api/ws                            — broadcast channel for edition_dirty notifications
+  GET   /api/auth/google/start             — kick off Google OAuth consent flow
+  GET   /api/auth/google/callback          — OAuth redirect target; persists refresh token
+  GET   /api/auth/google/status            — {configured, connected}
+  POST  /api/auth/google/disconnect        — wipe persisted Google refresh token
   GET   /api/whoami                        — echoes the Cloudflare Access user
   GET   /api/health                        — liveness probe
 """
@@ -29,7 +33,7 @@ from fastapi.responses import JSONResponse
 
 from .config import validate_env
 from .logging_config import configure_logging
-from .routers import chat, edition, layout, sources, ws
+from .routers import auth, chat, edition, layout, sources, ws
 
 configure_logging()
 log = logging.getLogger("homebase.app")
@@ -131,3 +135,4 @@ app.include_router(layout.router, prefix="/api")
 app.include_router(sources.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(ws.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
