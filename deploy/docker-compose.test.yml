@@ -1,0 +1,71 @@
+# The Daily Bhavi -- TEST/STAGING instance at homebase-test.lebcp.com.
+#
+# Runs alongside the prod `daily-bhavi` container on the Minisforum, with:
+#   - host port 8096 (prod is 8095)
+#   - image tag homebase:test (prod is homebase:local)
+#   - container name daily-bhavi-test (prod is daily-bhavi)
+#   - writable data volume /srv/containers/homebase-test/data (separate from prod)
+#   - read-only mounts (health-data, calendar, recipes) shared from prod paths
+#
+# Source code comes from the sibling `~/homebase-test/` checkout (built via
+# `context: ../../homebase-test`). Update the branch there with
+# `deploy/deploy-test.sh <branch>`.
+
+networks:
+  homebase-test-net:
+    name: homebase-test-net
+    driver: bridge
+  monitoring-net:
+    name: monitoring-net
+    external: true
+
+services:
+
+  daily-bhavi-test:
+    image: localhost/homebase:test
+    container_name: daily-bhavi-test
+    build:
+      context: ../../homebase-test
+      dockerfile: Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-test}
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - PROMETHEUS_URL=http://prometheus:9090
+      - PROD_HEALTH_JSON=/data/health-data/prod-health.json
+      - OURA_SUMMARY=/data/health-data/daily-summary.json
+      - CALENDAR_EVENTS=/data/calendar/today.json
+      - RECIPE_DIR=/data/recipes
+      - LAYOUT_PATH=/data/layout.json
+      - REQUIRE_AUTH=${HOMEBASE_REQUIRE_AUTH:-true}
+      - ALLOWED_EMAILS=${HOMEBASE_ALLOWED_EMAILS:-bhavipatel141@gmail.com}
+      - PLEX_URL=${PLEX_URL:-http://host.containers.internal:32400}
+      - OVERSEERR_URL=${OVERSEERR_URL:-http://host.containers.internal:5055}
+      - MARKETS_EXTRA=${MARKETS_EXTRA:-}
+      - ENV=${ENV:-staging}
+      - BUILD_VERSION=${BUILD_VERSION:-test}
+      - LOG_FORMAT=${LOG_FORMAT:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8096:8095"
+    volumes:
+      - /srv/containers/homebase-test/data:/data
+      - /srv/containers/homebase/health-data:/data/health-data:ro
+      - /srv/containers/homebase/calendar:/data/calendar:ro
+      - /srv/containers/homebase/recipes:/data/recipes:ro
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+    networks:
+      - homebase-test-net
+      - monitoring-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8095/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      io.containers.autoupdate: local
