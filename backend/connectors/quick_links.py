@@ -15,7 +15,8 @@ DEFAULT_LINKS_BLOB = (
     "Airflow | https://airflow.lebcp.com | Data pipelines\n"
     "Superset | https://superset.lebcp.com | Analytics & charts\n"
     "Plex | https://plex.lebcp.com | Media library\n"
-    "Requests | https://requests.lebcp.com | Overseerr request portal"
+    "Requests | https://requests.lebcp.com | Overseerr request portal\n"
+    "Gayur | https://gayur.lebcp.com | Peer-reviewed roast site"
 )
 
 
