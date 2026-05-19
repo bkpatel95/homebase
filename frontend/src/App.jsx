@@ -9,7 +9,7 @@ import { useEdition } from './hooks/useEdition.js';
 import { useEditionSocket } from './hooks/useEditionSocket.js';
 
 export default function App() {
-  const { edition, error, loading, refresh } = useEdition();
+  const { edition, error, loading, reconnecting, refresh } = useEdition();
   const [user, setUser] = useState(null);
   const [toast, setToast] = useState(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
@@ -62,7 +62,9 @@ export default function App() {
 
           {error && !edition && (
             <p className="body-serif italic text-center py-16">
-              The presses are jammed — {error}. Refreshing shortly.
+              {reconnecting
+                ? 'Reconnecting to the press…'
+                : `The presses are jammed — ${error}. Refreshing shortly.`}
             </p>
           )}
 
