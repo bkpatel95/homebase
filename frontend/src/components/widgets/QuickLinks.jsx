@@ -6,7 +6,6 @@ const FALLBACK_LINKS = [
   { name: 'Superset', href: 'https://superset.lebcp.com', blurb: 'Analytics' },
   { name: 'Plex', href: 'https://plex.lebcp.com', blurb: 'Media library' },
   { name: 'Requests', href: 'https://requests.lebcp.com', blurb: 'Overseerr' },
-  { name: 'Gayur', href: 'https://gayur.lebcp.com', blurb: 'Peer‑reviewed roast site' },
 ];
 
 export default function QuickLinks({ data }) {
