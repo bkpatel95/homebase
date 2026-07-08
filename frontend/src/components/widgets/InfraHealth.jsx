@@ -1,21 +1,50 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 function StatusDot({ state }) {
   const cls = state === 'running' ? 'dot-ok' : state === 'restarting' ? 'dot-warn' : 'dot-bad';
   return <span className={`dot ${cls}`} aria-label={state} />;
 }
 
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">Infrastructure</div>
+          <h3 className="headline text-[1.35rem] mt-1">The Container Beat</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
 export default function InfraHealth({ data }) {
-  if (!data) return <Skeleton title="Infrastructure" />;
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="infrastructure" detail={data.error} />
+      </section>
+    );
+  }
+
+  if (!data || (data.available === false && !data.containers_total)) {
+    return (
+      <section>
+        <Header timestamp={data?.collected_at} />
+        <p className="ink-loading body-serif">The presses are still warming…</p>
+      </section>
+    );
+  }
 
   const { containers = [], containers_up = 0, containers_total = 0, containers_down = 0 } = data;
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">Infrastructure</div>
-        <h3 className="headline text-[1.35rem] mt-1">The Container Beat</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       <div className="flex items-baseline gap-4 mb-3">
         <div>
@@ -49,17 +78,6 @@ export default function InfraHealth({ data }) {
           <li className="py-3 meta-sans italic">No container data — Prometheus may be quiet.</li>
         )}
       </ul>
-    </section>
-  );
-}
-
-function Skeleton({ title }) {
-  return (
-    <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">{title}</div>
-      </header>
-      <p className="ink-loading body-serif">The presses are still warming…</p>
     </section>
   );
 }

@@ -22,6 +22,9 @@ N_COLUMNS = 3
 ALL_WIDGETS = [
     "health_wellness",
     "calendar",
+    "weather",
+    "reminders",
+    "gmail",
     "markets",
     "media",
     "nutrition",
@@ -39,6 +42,9 @@ MOOD_PRIORITY = {
     "morning": [
         "health_wellness",
         "calendar",
+        "weather",
+        "reminders",
+        "gmail",
         "nutrition",
         "markets",
         "media",
@@ -50,6 +56,9 @@ MOOD_PRIORITY = {
     "midday": [
         "markets",
         "calendar",
+        "reminders",
+        "weather",
+        "gmail",
         "health_wellness",
         "media",
         "nutrition",
@@ -59,6 +68,9 @@ MOOD_PRIORITY = {
         "quick_links",
     ],
     "evening": [
+        "reminders",
+        "gmail",
+        "weather",
         "health_wellness",
         "nutrition",
         "media",

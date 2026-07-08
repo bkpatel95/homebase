@@ -1,4 +1,6 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 function Macros({ m }) {
   if (!m) return null;
@@ -28,16 +30,37 @@ function Macros({ m }) {
   );
 }
 
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">Recipe &amp; Table</div>
+          <h3 className="headline text-[1.35rem] mt-1">Today's Menu</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
 export default function Nutrition({ data }) {
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="meal plan" detail={data.error} />
+      </section>
+    );
+  }
+
   if (!data?.available) return null;
   const meals = data.meals || [];
+  if (!meals.length) return null;
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">Recipe & Table</div>
-        <h3 className="headline text-[1.35rem] mt-1">Today's Menu</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       <ul className="divide-y rule-thin border-t rule-thin border-b">
         {meals.map((m) => (

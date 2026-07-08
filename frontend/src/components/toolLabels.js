@@ -1,6 +1,9 @@
 const WIDGET_NAMES = {
   health_wellness: 'Health & Wellness',
   calendar: 'Calendar',
+  weather: 'Weather',
+  reminders: 'Reminders',
+  gmail: 'Email',
   markets: 'Markets',
   media: 'Media',
   nutrition: 'Nutrition',

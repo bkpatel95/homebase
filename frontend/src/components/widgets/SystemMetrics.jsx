@@ -1,4 +1,6 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 function Bar({ pct }) {
   const v = Math.max(0, Math.min(100, pct ?? 0));
@@ -39,14 +41,34 @@ function fmtUptime(secs) {
   return `${h}h ${m}m`;
 }
 
-export default function SystemMetrics({ data }) {
-  if (!data) {
-    return (
-      <section>
-        <header className="rule-after mb-3">
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
           <div className="section-eyebrow">The Pulse</div>
           <h3 className="headline text-[1.35rem] mt-1">System Metrics</h3>
-        </header>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
+export default function SystemMetrics({ data }) {
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="system metrics" detail={data.error} />
+      </section>
+    );
+  }
+
+  if (!data || data.cpu_pct == null) {
+    return (
+      <section>
+        <Header timestamp={data?.collected_at} />
         <p className="ink-loading body-serif">Waiting on Prometheus…</p>
       </section>
     );
@@ -54,10 +76,7 @@ export default function SystemMetrics({ data }) {
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">The Pulse</div>
-        <h3 className="headline text-[1.35rem] mt-1">System Metrics</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       <div className="divide-y rule-thin border-t rule-thin border-b">
         <Stat label="CPU" value={fmt(data.cpu_pct, 1)} unit="%" pct={data.cpu_pct} />
@@ -67,9 +86,7 @@ export default function SystemMetrics({ data }) {
         <Stat label="Uptime" value={fmtUptime(data.uptime_seconds)} />
       </div>
 
-      <p className="byline mt-3">
-        From the Prometheus wire · refreshed {refreshedAgo(data.collected_at)}
-      </p>
+      <p className="byline mt-3">From the Prometheus wire.</p>
     </section>
   );
 }
@@ -77,12 +94,4 @@ export default function SystemMetrics({ data }) {
 function fmt(n, digits = 1) {
   if (n == null || Number.isNaN(n)) return null;
   return Number(n).toFixed(digits);
-}
-
-function refreshedAgo(iso) {
-  if (!iso) return 'recently';
-  const diff = (Date.now() - Date.parse(iso)) / 1000;
-  if (diff < 60) return 'moments ago';
-  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-  return `${Math.floor(diff / 3600)}h ago`;
 }

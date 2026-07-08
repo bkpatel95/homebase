@@ -1,4 +1,6 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
 
 function fmtPrice(p, sym) {
   if (p == null) return '—';
@@ -28,16 +30,37 @@ function Row({ t }) {
   );
 }
 
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">Markets &amp; Finance</div>
+          <h3 className="headline text-[1.35rem] mt-1">The Money Pages</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
+
 export default function Markets({ data }) {
+  if (data?.error) {
+    return (
+      <section>
+        <Header timestamp={data.collected_at} />
+        <EmptyState source="markets" detail={data.error} />
+      </section>
+    );
+  }
+
   if (!data?.available) return null;
   const tickers = data.tickers || [];
+  if (!tickers.length) return null;
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">Markets & Finance</div>
-        <h3 className="headline text-[1.35rem] mt-1">The Money Pages</h3>
-      </header>
+      <Header timestamp={data.collected_at} />
 
       <ul className="border-t rule-thin">
         {tickers.map((t) => (

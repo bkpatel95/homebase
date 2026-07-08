@@ -1,13 +1,26 @@
 import React from 'react';
+import StalenessBadge from '../StalenessBadge.jsx';
+import EmptyState from '../EmptyState.jsx';
+
+function Header({ timestamp }) {
+  return (
+    <header className="rule-after mb-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <div className="section-eyebrow">Operations Desk</div>
+          <h3 className="headline text-[1.35rem] mt-1">Prod Health Report</h3>
+        </div>
+        <StalenessBadge timestamp={timestamp} />
+      </div>
+    </header>
+  );
+}
 
 export default function ProdHealth({ data }) {
   if (!data) {
     return (
       <section>
-        <header className="rule-after mb-3">
-          <div className="section-eyebrow">Operations Desk</div>
-          <h3 className="headline text-[1.35rem] mt-1">Prod Health Report</h3>
-        </header>
+        <Header />
         <p className="ink-loading body-serif">Awaiting the morning audit…</p>
       </section>
     );
@@ -16,11 +29,8 @@ export default function ProdHealth({ data }) {
   if (data.error) {
     return (
       <section>
-        <header className="rule-after mb-3">
-          <div className="section-eyebrow">Operations Desk</div>
-          <h3 className="headline text-[1.35rem] mt-1">Prod Health Report</h3>
-        </header>
-        <p className="body-serif italic">No audit on file — {data.error}</p>
+        <Header timestamp={data.timestamp || data.collected_at} />
+        <EmptyState source="prod health audit" detail={data.error} />
       </section>
     );
   }
@@ -33,10 +43,7 @@ export default function ProdHealth({ data }) {
 
   return (
     <section>
-      <header className="rule-after mb-3">
-        <div className="section-eyebrow">Operations Desk</div>
-        <h3 className="headline text-[1.35rem] mt-1">Prod Health Report</h3>
-      </header>
+      <Header timestamp={data.timestamp || data.collected_at} />
 
       <div className="flex items-baseline gap-3 mb-2">
         <span className={`dot ${issues.length ? 'dot-warn' : 'dot-ok'}`} />
